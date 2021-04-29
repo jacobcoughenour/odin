@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { ArrowLeft, ArrowRight, RotateCw } from "react-feather";
+import { IconButton, Omnibox } from "./components";
 import normalizeUrl from "normalize-url";
 import { WebviewTag } from 'electron';
 import "./index.css";
@@ -49,6 +50,7 @@ export class App extends React.Component<AppProps, AppState> {
 		this.setState({ url: normalizeUrl(url) });
 	}
 
+	// todo move some of this stuff to the Omnibox component
 	onUrlInputKeyDown = (event: React.KeyboardEvent) => {
 		if (event.code === "Enter") {
 			this.navigateTo(this.urlInputRef.current.value);
@@ -61,11 +63,10 @@ export class App extends React.Component<AppProps, AppState> {
 		return (
 			<div className={`divide-y divide-purple-500 border-purple-500 flex flex-col h-full border`}>
 				<div className={`region-drag flex-none flex pt-6 pb-2 px-4 bg-current space-x-2`}>
-					{/* todo turn these buttons into an "icon button" component */}
-					<button className={`stroke-current text-gray-900 dark:text-white`}><ArrowLeft/></button>
-					<button className={`stroke-current text-gray-900 dark:text-white`}><ArrowRight/></button>
-					<button className={`stroke-current text-gray-900 dark:text-white`}><RotateCw/></button>
-					<input className={`flex-1 stroke-current text-gray-900 dark:text-white dark:bg-gray-800`} ref={this.urlInputRef} type="text" defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
+					<IconButton><ArrowLeft/></IconButton>
+					<IconButton><ArrowRight/></IconButton>
+					<IconButton><RotateCw /></IconButton>
+					<Omnibox ref={this.urlInputRef} defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
 				</div>
 				<webview ref={this.webviewRef} className={`flex-1`} src={url}></webview>
 			</div>
