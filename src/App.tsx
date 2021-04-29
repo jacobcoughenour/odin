@@ -1,10 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-
+import { ArrowLeft, ArrowRight, RotateCw } from "react-feather";
 import normalizeUrl from "normalize-url";
-
-import "./index.css";
 import { WebviewTag } from 'electron';
+import "./index.css";
 
 
 type AppProps = {};
@@ -57,19 +56,19 @@ export class App extends React.Component<AppProps, AppState> {
 	}
 
 	render() {
-
 		const { url } = this.state;
 
 		return (
-			<>
-				<div id="omnibox">
-					<button id="nav-back-button">⬅️</button>
-					<button id="nav-forward-button">➡️</button>
-					<button id="nav-refresh-button">↩️</button>
-					<input ref={this.urlInputRef} id="url-input" type="text" defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
+			<div className={`divide-y divide-purple-500 border-purple-500 flex flex-col h-full border`}>
+				<div className={`region-drag flex-none flex pt-6 pb-2 px-4 bg-current space-x-2`}>
+					{/* todo turn these buttons into an "icon button" component */}
+					<button className={`stroke-current text-gray-900 dark:text-white`}><ArrowLeft/></button>
+					<button className={`stroke-current text-gray-900 dark:text-white`}><ArrowRight/></button>
+					<button className={`stroke-current text-gray-900 dark:text-white`}><RotateCw/></button>
+					<input className={`flex-1 stroke-current text-gray-900 dark:text-white dark:bg-gray-800`} ref={this.urlInputRef} type="text" defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
 				</div>
-				<webview ref={this.webviewRef} id="main-webview" src={url}></webview>
-			</>
+				<webview ref={this.webviewRef} className={`flex-1`} src={url}></webview>
+			</div>
 		);
 	}
 }
