@@ -17,6 +17,7 @@ const createWindow = (): void => {
 			webviewTag: true,
 			plugins: true,
 		},
+		backgroundColor: "#333333",
 	});
 
 	// and load the index.html of the app.
