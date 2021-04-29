@@ -73,4 +73,4 @@ export class App extends React.Component<AppProps, AppState> {
 	}
 }
 
-ReactDOM.render(<App/>, document.body);
+ReactDOM.render(<App/>, document.getElementById("react-root"));
