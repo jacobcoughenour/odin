@@ -75,7 +75,3 @@ export class App extends React.Component<AppProps, AppState> {
 }
 
 ReactDOM.render(<App/>, document.body);
-
-
-
-
