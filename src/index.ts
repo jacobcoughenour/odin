@@ -1,6 +1,6 @@
-import { app, BrowserWindow, BrowserView } from "electron";
+import { app, BrowserWindow, BrowserView, Rectangle } from "electron";
 
-import { ipcMain} from 'electron';
+import { ipcMain } from "electron";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: any;
 
@@ -10,11 +10,11 @@ if (require("electron-squirrel-startup")) {
 	app.quit();
 }
 
-var mainWindow : BrowserWindow = null;
+var mainWindow: BrowserWindow = null;
 
 const createWindow = (): void => {
 	// Create the browser window.
-	 mainWindow = new BrowserWindow({
+	mainWindow = new BrowserWindow({
 		height: 600,
 		width: 800,
 		frame: false,
@@ -35,21 +35,38 @@ const createWindow = (): void => {
 	mainWindow.webContents.openDevTools();
 };
 
+ipcMain.on("new-tab", (event, args) => {
+	const view = new BrowserView({});
 
-ipcMain.on(('new-tab'), (event, args) => {
-	
-	const view = new BrowserView({
-	});
-
-	mainWindow.setBrowserView(view);
+	// todo maybe this should be addBrowserView?
+	mainWindow.addBrowserView(view);
 
 	// x is temp
-	view.setBounds({
-		x: 0 , y: 60, width: args.width, height: args.height 
-	})
+	// view.setBounds({
+	// 	x: 0,
+	// 	y: 60,
+	// 	width: args.width,
+	// 	height: args.height,
+	// });
 	view.webContents.loadURL(args.url);
+});
 
-})
+ipcMain.on("update-browser-view-bounds", (event, args) => {
+	// get the window we received the event from
+	const window = BrowserWindow.fromWebContents(event.sender);
+	const views = window.getBrowserViews();
+
+	// todo this doesn't work
+
+	const { id, x, y, w, h } = args;
+
+	if (id >= 0 && id < views.length) {
+		// update view bounds
+		views[id].setBounds({ x, y, width: w, height: h });
+	} else {
+		console.error("invalid view id received");
+	}
+});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

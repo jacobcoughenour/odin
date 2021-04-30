@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { ArrowLeft, ArrowRight, RotateCw, Plus } from "react-feather";
-import { IconButton, Omnibox } from "./components";
+import { IconButton, Omnibox, BrowserViewProxy } from "./components";
 import normalizeUrl from "normalize-url";
-import { WebviewTag, ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import "./index.css";
 
 
@@ -17,7 +17,7 @@ type AppState = {
 export class App extends React.Component<AppProps, AppState> {
 
 	urlInputRef: React.RefObject<HTMLInputElement>;
-	webviewRef: React.RefObject<WebviewTag>;
+	// browserViewProxyRef: React.RefObject<BrowserViewProxy>;
 
 	constructor(props: AppProps) {
 		super(props);
@@ -28,18 +28,18 @@ export class App extends React.Component<AppProps, AppState> {
 		};
 
 		this.urlInputRef = React.createRef();
-		this.webviewRef = React.createRef();
+		// this.browserViewProxyRef = React.createRef();
 	}
 
 	componentDidMount() {
 		this.navigateTo(this.state.homepage);
 
-		const view = this.webviewRef.current;
+		// const view = this.browserViewProxyRef.current;
 
-		view.addEventListener("did-navigate", (event: Electron.DidNavigateEvent) => {
-			// todo this isn't working
-			this.setState({ url: event.url });
-		});
+		// view.addEventListener("did-navigate", (event: Electron.DidNavigateEvent) => {
+		// 	// todo this isn't working
+		// 	this.setState({ url: event.url });
+		// });
 	}
 
 	componentWillUnmount() {
@@ -59,11 +59,11 @@ export class App extends React.Component<AppProps, AppState> {
 
 	createTab = () => {
 		const url = normalizeUrl('duckduckgo.com');
-		ipcRenderer.send('new-tab', {
-			url: url,
-			height: this.webviewRef.current.clientHeight,
-			width: this.webviewRef.current.clientWidth,
-		});
+		// ipcRenderer.send('new-tab', {
+		// 	url: url,
+		// 	height: this.browserViewProxyRef.current.clientHeight,
+		// 	width: this.browserViewProxyRef.current.clientWidth,
+		// });
 	}
 
 	render() {
@@ -78,7 +78,7 @@ export class App extends React.Component<AppProps, AppState> {
 					<IconButton onClick={() => this.createTab()}><Plus/></IconButton>
 					<Omnibox ref={this.urlInputRef} defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
 				</div>
-				<webview ref={this.webviewRef} className={`flex-1`} src={url}></webview>
+				<BrowserViewProxy className={`flex-1`} viewid={0} />
 			</div>
 		);
 	}
