@@ -1,4 +1,7 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, BrowserView } from "electron";
+
+import { ipcMain} from 'electron';
+
 declare const MAIN_WINDOW_WEBPACK_ENTRY: any;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -7,15 +10,20 @@ if (require("electron-squirrel-startup")) {
 	app.quit();
 }
 
+var mainWindow : BrowserWindow = null;
+
 const createWindow = (): void => {
 	// Create the browser window.
-	const mainWindow = new BrowserWindow({
+	 mainWindow = new BrowserWindow({
 		height: 600,
 		width: 800,
 		frame: false,
 		webPreferences: {
 			webviewTag: true,
 			plugins: true,
+			nodeIntegration: true,
+			contextIsolation: false,
+			enableRemoteModule: true,
 		},
 		backgroundColor: "#333333",
 	});
@@ -26,6 +34,22 @@ const createWindow = (): void => {
 	// Open the DevTools.
 	mainWindow.webContents.openDevTools();
 };
+
+
+ipcMain.on(('new-tab'), (event, args) => {
+	
+	const view = new BrowserView({
+	});
+
+	mainWindow.setBrowserView(view);
+
+	// x is temp
+	view.setBounds({
+		x: 0 , y: 60, width: args.width, height: args.height 
+	})
+	view.webContents.loadURL(args.url);
+
+})
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

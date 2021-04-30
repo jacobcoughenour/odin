@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { ArrowLeft, ArrowRight, RotateCw } from "react-feather";
+import { ArrowLeft, ArrowRight, RotateCw, Plus } from "react-feather";
 import { IconButton, Omnibox } from "./components";
 import normalizeUrl from "normalize-url";
-import { WebviewTag } from 'electron';
+import { WebviewTag, ipcRenderer } from 'electron';
 import "./index.css";
 
 
@@ -57,6 +57,15 @@ export class App extends React.Component<AppProps, AppState> {
 		}
 	}
 
+	createTab = () => {
+		const url = normalizeUrl('duckduckgo.com');
+		ipcRenderer.send('new-tab', {
+			url: url,
+			height: this.webviewRef.current.clientHeight,
+			width: this.webviewRef.current.clientWidth,
+		});
+	}
+
 	render() {
 		const { url } = this.state;
 
@@ -66,6 +75,7 @@ export class App extends React.Component<AppProps, AppState> {
 					<IconButton><ArrowLeft/></IconButton>
 					<IconButton><ArrowRight/></IconButton>
 					<IconButton><RotateCw /></IconButton>
+					<IconButton onClick={() => this.createTab()}><Plus/></IconButton>
 					<Omnibox ref={this.urlInputRef} defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
 				</div>
 				<webview ref={this.webviewRef} className={`flex-1`} src={url}></webview>
