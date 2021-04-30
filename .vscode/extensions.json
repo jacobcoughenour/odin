@@ -1,0 +1,7 @@
+{
+	"recommendations": [
+		"csstools.postcss",
+		"aaron-bond.better-comments",
+		"esbenp.prettier-vscode"
+	]
+}
