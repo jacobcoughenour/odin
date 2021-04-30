@@ -19,7 +19,6 @@ const createWindow = (): void => {
 		width: 800,
 		frame: false,
 		webPreferences: {
-			webviewTag: true,
 			plugins: true,
 			nodeIntegration: true,
 			contextIsolation: false,
