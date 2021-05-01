@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { ArrowLeft, ArrowRight, RotateCw, Plus } from "react-feather";
-import { IconButton, Omnibox, BrowserViewProxy } from "./components";
+import { IconButton, Omnibox, Bundle } from "./components";
 import normalizeUrl from "normalize-url";
 import { ipcRenderer } from 'electron';
 import "./index.css";
@@ -82,7 +82,7 @@ export class App extends React.Component<AppProps, AppState> {
 					<IconButton onClick={() => this.createTab()}><Plus/></IconButton>
 					<Omnibox ref={this.urlInputRef} defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
 				</div>
-				<BrowserViewProxy className={`flex-1`} viewid={0} />
+				<Bundle className={`flex flex-1`}/>
 			</div>
 		);
 	}
