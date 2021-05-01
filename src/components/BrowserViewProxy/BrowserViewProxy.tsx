@@ -14,12 +14,11 @@ class BrowserViewProxy extends React.Component<BrowserViewProxyProps> {
 	constructor(props: BrowserViewProxyProps) {
 		super(props);
 		this.divRef = React.createRef();
-		this.resizeObserver = new ResizeObserver(this.onResizeEvent);
 	}
 
 	componentDidMount() {
+		this.resizeObserver = new ResizeObserver(this.onResizeEvent);
 		this.resizeObserver.observe(this.divRef.current);
-		this.sendBounds(this.divRef.current);
 	}
 
 	componentWillUnmount() {

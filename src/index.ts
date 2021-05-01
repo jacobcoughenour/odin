@@ -35,20 +35,13 @@ const createWindow = (): void => {
 		mainWindow.webContents.openDevTools();
 };
 
-ipcMain.on("new-tab", (event, args) => {
+const createBrowserView = (args : any) : void => {
 	const view = new BrowserView({});
 
-	// todo maybe this should be addBrowserView?
 	mainWindow.addBrowserView(view);
 
-	// x is temp
-	// view.setBounds({
-	// 	x: 0,
-	// 	y: 60,
-	// 	width: args.width,
-	// 	height: args.height,
-	// });
 	view.webContents.loadURL(args.url);
+}
 
 ipcMain.on('refresh', () => {
 	mainWindow.reload()
@@ -57,9 +50,14 @@ ipcMain.on('refresh', () => {
 ipcMain.on("update-browser-view-bounds", (event, args) => {
 	// get the window we received the event from
 	const window = BrowserWindow.fromWebContents(event.sender);
-	const views = window.getBrowserViews();
 
-	// todo this doesn't work
+	var views = window.getBrowserViews();
+
+	// Default browserview if none exist
+	if (views.length === 0) {
+		createBrowserView({url: 'https://duckduckgo.com'});
+		views = window.getBrowserViews();
+	}
 
 	const { id, x, y, w, h } = args;
 
