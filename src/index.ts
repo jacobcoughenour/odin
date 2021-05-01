@@ -49,7 +49,10 @@ ipcMain.on("new-tab", (event, args) => {
 	// 	height: args.height,
 	// });
 	view.webContents.loadURL(args.url);
-});
+
+ipcMain.on('refresh', () => {
+	mainWindow.reload()
+})
 
 ipcMain.on("update-browser-view-bounds", (event, args) => {
 	// get the window we received the event from

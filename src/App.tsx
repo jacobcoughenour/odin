@@ -66,6 +66,10 @@ export class App extends React.Component<AppProps, AppState> {
 		// });
 	}
 
+	refresh = () => {
+		ipcRenderer.send('refresh');
+	}
+
 	render() {
 		const { url } = this.state;
 
@@ -74,7 +78,7 @@ export class App extends React.Component<AppProps, AppState> {
 				<div className={`region-drag flex-none flex pt-6 pb-2 px-4 bg-current space-x-2`}>
 					<IconButton><ArrowLeft/></IconButton>
 					<IconButton><ArrowRight/></IconButton>
-					<IconButton><RotateCw /></IconButton>
+					<IconButton onClick={() => this.refresh()}><RotateCw /></IconButton>
 					<IconButton onClick={() => this.createTab()}><Plus/></IconButton>
 					<Omnibox ref={this.urlInputRef} defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
 				</div>
