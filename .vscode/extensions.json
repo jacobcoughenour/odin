@@ -2,6 +2,7 @@
 	"recommendations": [
 		"csstools.postcss",
 		"aaron-bond.better-comments",
-		"esbenp.prettier-vscode"
+		"esbenp.prettier-vscode",
+		"bradlc.vscode-tailwindcss"
 	]
 }
