@@ -1,7 +1,6 @@
 import { app, BrowserWindow, BrowserView, Rectangle } from "electron";
-
+import { createBrowserView, ServerListeners } from './shared';
 import { ipcMain } from "electron";
-
 declare const MAIN_WINDOW_WEBPACK_ENTRY: any;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -11,6 +10,8 @@ if (require("electron-squirrel-startup")) {
 }
 
 var mainWindow: BrowserWindow = null;
+
+let serverListeners: ServerListeners = null;
 
 const createWindow = (): void => {
 	// Create the browser window.
@@ -33,41 +34,10 @@ const createWindow = (): void => {
 	// Open the DevTools.
 	if (process.env.NODE_ENV === "development")
 		mainWindow.webContents.openDevTools();
+
+	serverListeners = new ServerListeners(mainWindow)
+	serverListeners.registerListeners();
 };
-
-const createBrowserView = (args : any) : void => {
-	const view = new BrowserView({});
-
-	mainWindow.addBrowserView(view);
-
-	view.webContents.loadURL(args.url);
-}
-
-ipcMain.on('refresh', () => {
-	mainWindow.reload()
-})
-
-ipcMain.on("update-browser-view-bounds", (event, args) => {
-	// get the window we received the event from
-	const window = BrowserWindow.fromWebContents(event.sender);
-
-	var views = window.getBrowserViews();
-
-	// Default browserview if none exist
-	if (views.length === 0) {
-		createBrowserView({url: 'https://duckduckgo.com'});
-		views = window.getBrowserViews();
-	}
-
-	const { id, x, y, w, h } = args;
-
-	if (id >= 0 && id < views.length) {
-		// update view bounds
-		views[id].setBounds({ x, y, width: w, height: h });
-	} else {
-		console.error("invalid view id received");
-	}
-});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

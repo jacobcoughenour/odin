@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, RotateCw, Plus } from "react-feather";
 import { IconButton, Omnibox, Bundle } from "./components";
 import normalizeUrl from "normalize-url";
 import { ipcRenderer } from 'electron';
+import { BrowserViewProxy } from './components'
 import "./index.css";
 
 
@@ -12,6 +13,7 @@ type AppProps = {};
 type AppState = {
 	url: string
 	homepage: string
+	viewid: number
 }
 
 export class App extends React.Component<AppProps, AppState> {
@@ -24,11 +26,11 @@ export class App extends React.Component<AppProps, AppState> {
 
 		this.state = {
 			url: "about:blank",
-			homepage: normalizeUrl("duckduckgo.com")
+			homepage: normalizeUrl("duckduckgo.com"),
+			viewid: 0
 		};
 
 		this.urlInputRef = React.createRef();
-		// this.browserViewProxyRef = React.createRef();
 	}
 
 	componentDidMount() {
@@ -45,7 +47,7 @@ export class App extends React.Component<AppProps, AppState> {
 	componentWillUnmount() {
 		// todo should remove the event listeners we added
 	}
-	
+
 	navigateTo(url: string) {
 		this.setState({ url: normalizeUrl(url) });
 	}
@@ -59,11 +61,8 @@ export class App extends React.Component<AppProps, AppState> {
 
 	createTab = () => {
 		const url = normalizeUrl('duckduckgo.com');
-		// ipcRenderer.send('new-tab', {
-		// 	url: url,
-		// 	height: this.browserViewProxyRef.current.clientHeight,
-		// 	width: this.browserViewProxyRef.current.clientWidth,
-		// });
+		ipcRenderer.send('new-tab', {
+		});
 	}
 
 	refresh = () => {
@@ -82,7 +81,7 @@ export class App extends React.Component<AppProps, AppState> {
 					<IconButton onClick={() => this.createTab()}><Plus/></IconButton>
 					<Omnibox ref={this.urlInputRef} defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
 				</div>
-				<Bundle className={`flex flex-1`}/>
+					<BrowserViewProxy className={`flex flex-1`}/>
 			</div>
 		);
 	}

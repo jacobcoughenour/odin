@@ -3,10 +3,12 @@ import clsx from "clsx";
 import { ipcRenderer } from 'electron';
 
 export type BrowserViewProxyProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & {
-	viewid: number
 };
+export type BrowserViewProxyState = {
+	viewid: string;
+}
 
-class BrowserViewProxy extends React.Component<BrowserViewProxyProps> {
+class BrowserViewProxy extends React.Component<BrowserViewProxyProps, BrowserViewProxyState> {
 
 	divRef: React.RefObject<HTMLDivElement>;
 	resizeObserver: ResizeObserver;
@@ -14,11 +16,23 @@ class BrowserViewProxy extends React.Component<BrowserViewProxyProps> {
 	constructor(props: BrowserViewProxyProps) {
 		super(props);
 		this.divRef = React.createRef();
+
+		this.state = {
+			viewid: ''
+		};
 	}
 
 	componentDidMount() {
 		this.resizeObserver = new ResizeObserver(this.onResizeEvent);
 		this.resizeObserver.observe(this.divRef.current);
+
+		ipcRenderer.on('updateViewId', (event, args) => {
+			this.setState({
+				viewid: args.viewid
+			});
+
+			this.sendBounds(this.divRef.current);
+		})
 	}
 
 	componentWillUnmount() {
@@ -32,7 +46,7 @@ class BrowserViewProxy extends React.Component<BrowserViewProxyProps> {
 	sendBounds(target: Element) {
 		const rect = target.getBoundingClientRect();
 		ipcRenderer.send('update-browser-view-bounds', {
-			id: this.props.viewid,
+			id: this.state.viewid,
 			x: rect.x,
 			y: rect.y,
 			w: rect.width,

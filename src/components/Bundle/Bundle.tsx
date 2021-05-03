@@ -15,7 +15,7 @@ class Bundle extends React.Component<BundleProps, BundleState> {
 		super(props);
 		this.state = {
 			active : true,
-			tabs: [<BrowserViewProxy className={`flex-1`}  key={0} viewid={0}/>]
+			tabs: [<BrowserViewProxy className={`flex-1`}  key={0} />]
 		}
 	}
 // Will need to consider what we do with multiple browser views in terms of rendering them
