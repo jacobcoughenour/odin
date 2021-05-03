@@ -2,8 +2,9 @@ import * as React from "react";
 import clsx from "clsx";
 import { ipcRenderer } from 'electron';
 
-export type BrowserViewProxyProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & {
-};
+export type BrowserViewProxyProps = {
+} & React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
+
 export type BrowserViewProxyState = {
 	viewid: string;
 }

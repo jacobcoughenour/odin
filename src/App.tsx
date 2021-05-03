@@ -1,23 +1,29 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import { ArrowLeft, ArrowRight, RotateCw, Plus } from "react-feather";
-import { IconButton, Omnibox, Bundle } from "./components";
+import {
+	IconButton,
+	Omnibox,
+	BrowserViewProxy,
+	TabButton,
+	TabButtonProps,
+} from "./components";
 import normalizeUrl from "normalize-url";
-import { ipcRenderer } from 'electron';
-import { BrowserViewProxy } from './components'
+import { BrowserView, ipcRenderer } from "electron";
 import "./index.css";
-
+import clsx from "clsx";
 
 type AppProps = {};
 
 type AppState = {
-	url: string
-	homepage: string
-	viewid: number
-}
+	url: string;
+	homepage: string;
+	tabs: TabButtonProps[];
+	active_tab_id: string;
+	show_omnibox: boolean;
+};
 
 export class App extends React.Component<AppProps, AppState> {
-
 	urlInputRef: React.RefObject<HTMLInputElement>;
 	// browserViewProxyRef: React.RefObject<BrowserViewProxy>;
 
@@ -27,10 +33,17 @@ export class App extends React.Component<AppProps, AppState> {
 		this.state = {
 			url: "about:blank",
 			homepage: normalizeUrl("duckduckgo.com"),
-			viewid: 0
+			tabs: ["a", "b", "c", "d"].map((e) => ({
+				uuid: e,
+				title: `tab ${e}`,
+				active: false,
+			})),
+			active_tab_id: "b",
+			show_omnibox: false,
 		};
 
 		this.urlInputRef = React.createRef();
+		// this.browserViewProxyRef = React.createRef();
 	}
 
 	componentDidMount() {
@@ -57,34 +70,88 @@ export class App extends React.Component<AppProps, AppState> {
 		if (event.code === "Enter") {
 			this.navigateTo(this.urlInputRef.current.value);
 		}
-	}
+	};
 
 	createTab = () => {
-		const url = normalizeUrl('duckduckgo.com');
-		ipcRenderer.send('new-tab', {
-		});
-	}
+		const url = normalizeUrl("duckduckgo.com");
+		// ipcRenderer.send('new-tab', {
+		// 	url: url,
+		// 	height: this.browserViewProxyRef.current.clientHeight,
+		// 	width: this.browserViewProxyRef.current.clientWidth,
+		// });
+	};
 
 	refresh = () => {
-		ipcRenderer.send('refresh');
-	}
+		ipcRenderer.send("refresh");
+	};
 
 	render() {
-		const { url } = this.state;
+		const { url, tabs, active_tab_id, show_omnibox } = this.state;
 
 		return (
-			<div className={`divide-y divide-purple-500 border-purple-500 flex flex-col h-full border`}>
-				<div className={`region-drag flex-none flex pt-6 pb-2 px-4 bg-current space-x-2`}>
-					<IconButton><ArrowLeft/></IconButton>
-					<IconButton><ArrowRight/></IconButton>
-					<IconButton onClick={() => this.refresh()}><RotateCw /></IconButton>
-					<IconButton onClick={() => this.createTab()}><Plus/></IconButton>
-					<Omnibox ref={this.urlInputRef} defaultValue={url} onKeyPress={(e) => this.onUrlInputKeyDown(e)} />
+			<div className={`border-purple-500 flex flex-col h-full border`}>
+				<div
+					className={`region-drag flex-none flex border-purple-500 border-b pt-6 pb-2 px-4 bg-current space-x-0`}
+				>
+					<IconButton icon={ArrowLeft} size={22} />
+					<IconButton disabled icon={ArrowRight} size={22} />
+					<IconButton
+						onClick={() => this.refresh()}
+						icon={RotateCw}
+						size={16}
+						iconprops={{ strokeWidth: 2.2 }}
+					/>
+					<div className={"block h-8 px-2"}>
+						<div
+							className={clsx(
+								"absolute",
+								// "bg-green-800",
+								"h-12",
+								show_omnibox && "hidden"
+							)}
+						>
+							{tabs.map((e) => (
+								<TabButton
+									{...e}
+									key={e.uuid}
+									active={active_tab_id === e.uuid}
+									onInactiveClick={() => {
+										this.setState({
+											active_tab_id: e.uuid,
+										});
+									}}
+									onActiveClick={() => {
+										this.setState({ show_omnibox: true });
+									}}
+									onCloseClick={() => {
+										console.log("close tab");
+									}}
+								/>
+							))}
+							<IconButton
+								onClick={() => this.createTab()}
+								icon={Plus}
+								size={20}
+							/>
+						</div>
+						<div
+							className={clsx(
+								"absolute",
+								!show_omnibox && "hidden"
+							)}
+						>
+							<Omnibox
+								onBlur={() => {
+									this.setState({ show_omnibox: false });
+								}}
+							/>
+						</div>
+					</div>
 				</div>
-					<BrowserViewProxy className={`flex flex-1`}/>
+				<BrowserViewProxy className={`flex flex-1`} />
 			</div>
 		);
 	}
 }
 
-ReactDOM.render(<App/>, document.getElementById("react-root"));
+ReactDOM.render(<App />, document.getElementById("react-root"));
