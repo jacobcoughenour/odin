@@ -1,0 +1,16 @@
+name: Update Issue Trackers
+
+on:
+  issues:
+    types: [opened, closed, reopened]
+jobs:
+  epics:
+    runs-on: ubuntu-latest
+    name: Update tracker issues
+    steps:
+      - name: Run epics action
+        uses: cloudaper/epics-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          epic-label-name: tracker
+          auto-close-epic: false
