@@ -35,7 +35,7 @@ const createWindow = (): void => {
 	if (process.env.NODE_ENV === "development")
 		mainWindow.webContents.openDevTools();
 
-	serverListeners = new ServerListeners(mainWindow)
+	serverListeners = new ServerListeners(mainWindow, app);
 	serverListeners.registerListeners();
 };
 

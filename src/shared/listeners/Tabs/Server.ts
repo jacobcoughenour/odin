@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { App, BrowserWindow, ipcMain } from 'electron';
 import { Store } from '../../Store';
 import { createBrowserView } from '../../ViewService';
 
@@ -9,10 +9,12 @@ import { createBrowserView } from '../../ViewService';
 export class ServerListeners {
 	mainWindow: BrowserWindow = null;
 	store: Store = null;
+	app: App = null;
 
-	constructor(mainWindow: BrowserWindow) {
+	constructor(mainWindow: BrowserWindow, app: App) {
 		this.mainWindow = mainWindow;
 		this.store = new Store();
+		this.app = app;
 	}
 	// todo Move stuff out / helper functions ex:for creating new tab
 	registerTabListeners(){
@@ -55,6 +57,11 @@ export class ServerListeners {
 					};
 				}),
 			})
+
+			if (Object.keys(this.store.views).length === 0) {
+				this.app.quit();
+			}
+
 		});
 
 		ipcMain.on("update-browser-view-bounds", (event, args) => {
