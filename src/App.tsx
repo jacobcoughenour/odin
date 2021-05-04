@@ -18,8 +18,8 @@ type AppProps = {};
 type AppState = {
 	url: string;
 	homepage: string;
-	tabs: TabButtonProps[];
-	active_tab_id: string;
+	tabs: { uuid: string; title: string }[];
+	active_tab_id?: string;
 	show_omnibox: boolean;
 };
 
@@ -33,12 +33,7 @@ export class App extends React.Component<AppProps, AppState> {
 		this.state = {
 			url: "about:blank",
 			homepage: normalizeUrl("duckduckgo.com"),
-			tabs: ["a", "b", "c", "d"].map((e) => ({
-				uuid: e,
-				title: `tab ${e}`,
-				active: false,
-			})),
-			active_tab_id: "b",
+			tabs: [],
 			show_omnibox: false,
 		};
 
@@ -49,12 +44,17 @@ export class App extends React.Component<AppProps, AppState> {
 	componentDidMount() {
 		this.navigateTo(this.state.homepage);
 
-		// const view = this.browserViewProxyRef.current;
+		ipcRenderer.on("updateViewId", (event, args) => {
+			this.setState({
+				active_tab_id: args.viewid,
+			});
+		});
 
-		// view.addEventListener("did-navigate", (event: Electron.DidNavigateEvent) => {
-		// 	// todo this isn't working
-		// 	this.setState({ url: event.url });
-		// });
+		ipcRenderer.on("tab-list", (event, args) => {
+			this.setState({
+				tabs: args.tabs,
+			});
+		});
 	}
 
 	componentWillUnmount() {
@@ -74,11 +74,8 @@ export class App extends React.Component<AppProps, AppState> {
 
 	createTab = () => {
 		const url = normalizeUrl("duckduckgo.com");
-		// ipcRenderer.send('new-tab', {
-		// 	url: url,
-		// 	height: this.browserViewProxyRef.current.clientHeight,
-		// 	width: this.browserViewProxyRef.current.clientWidth,
-		// });
+
+		ipcRenderer.send("new-tab", {});
 	};
 
 	refresh = () => {
@@ -112,10 +109,15 @@ export class App extends React.Component<AppProps, AppState> {
 						>
 							{tabs.map((e) => (
 								<TabButton
-									{...e}
+									uuid={e.uuid}
+									title={e.uuid}
 									key={e.uuid}
 									active={active_tab_id === e.uuid}
 									onInactiveClick={() => {
+										ipcRenderer.send("render-existing", {
+											uuid: e.uuid,
+										});
+
 										this.setState({
 											active_tab_id: e.uuid,
 										});
@@ -124,7 +126,9 @@ export class App extends React.Component<AppProps, AppState> {
 										this.setState({ show_omnibox: true });
 									}}
 									onCloseClick={() => {
-										console.log("close tab");
+										ipcRenderer.send("close-tab", {
+											uuid: e.uuid,
+										});
 									}}
 								/>
 							))}
@@ -148,7 +152,10 @@ export class App extends React.Component<AppProps, AppState> {
 						</div>
 					</div>
 				</div>
-				<BrowserViewProxy className={`flex flex-1`} />
+				<BrowserViewProxy
+					viewid={this.state.active_tab_id}
+					className={`flex flex-1`}
+				/>
 			</div>
 		);
 	}
