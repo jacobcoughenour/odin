@@ -76,11 +76,38 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 			style={{ marginLeft: -1 }}
 		>
 			{/* <Globe size={16} className={"p-1 bg-red-700"} /> */}
-			<span className={clsx("pl-2")}>{props.title}</span>
+			<span
+				className={clsx(
+					"ml-2",
+					"cursor-pointer",
+					"overflow-clip",
+					"whitespace-nowrap",
+					"overflow-hidden"
+				)}
+				style={{
+					maxWidth: 160,
+					// this adds that fading out when the tab title is truncated
+					WebkitMaskImage:
+						"-webkit-gradient(linear, 80% 0%, 100% 0%, from(rgb(0, 0, 0)), to(rgba(0, 0, 0, 0)))",
+				}}
+			>
+				{props.title}
+			</span>
 			{props.onCloseClick && (
-				<a onClick={onTabCloseClick} className={clsx("pl-4")}>
-					<X size={16} className={"inline"} />
-				</a>
+				<span className={clsx("cursor-pointer")}>
+					<X
+						onClick={onTabCloseClick}
+						size={18}
+						fontWeight={2.0}
+						className={clsx(
+							"inline",
+							"hover:bg-gray-700",
+							"rounded-full",
+							"p-0.5",
+							"cursor-pointer"
+						)}
+					/>
+				</span>
 			)}
 		</button>
 	);

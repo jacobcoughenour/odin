@@ -88,7 +88,18 @@ export class App extends React.Component<AppProps, AppState> {
 		return (
 			<div className={`border-purple-500 flex flex-col h-full border`}>
 				<div
-					className={`region-drag flex-none flex border-purple-500 border-b pt-6 pb-2 px-4 bg-current space-x-0`}
+					className={clsx(
+						"region-drag",
+						"flex-none",
+						"flex",
+						"border-purple-500",
+						"border-b",
+						"pt-6",
+						"pb-2",
+						"px-4",
+						"bg-current",
+						"space-x-0"
+					)}
 				>
 					<IconButton icon={ArrowLeft} size={22} />
 					<IconButton disabled icon={ArrowRight} size={22} />
@@ -101,7 +112,7 @@ export class App extends React.Component<AppProps, AppState> {
 					<div className={"block h-8 px-2"}>
 						<div
 							className={clsx(
-								"absolute",
+								// "absolute",
 								// "bg-green-800",
 								"h-12",
 								show_omnibox && "hidden"
@@ -133,6 +144,7 @@ export class App extends React.Component<AppProps, AppState> {
 								/>
 							))}
 							<IconButton
+								className={clsx("ml-1", "mb-2")}
 								onClick={() => this.createTab()}
 								icon={Plus}
 								size={20}
