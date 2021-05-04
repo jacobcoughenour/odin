@@ -24,6 +24,11 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 		else props.onInactiveClick && props.onInactiveClick(e);
 	};
 
+	let onTabAuxClick = (e: React.MouseEvent<any, MouseEvent>) => {
+		// close on middle click
+		if (e.button === 1) props.onCloseClick && props.onCloseClick(e);
+	};
+
 	let onTabCloseClick = (e: React.MouseEvent<any, MouseEvent>) => {
 		props.onCloseClick && props.onCloseClick(e);
 		e.stopPropagation();
@@ -38,6 +43,7 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 				"active",
 			])}
 			onClick={onTabClick}
+			onAuxClick={onTabAuxClick}
 			className={clsx(
 				"focus:outline-none",
 				// "focus:bg-gray-700",
