@@ -18,7 +18,7 @@ type AppProps = {};
 type AppState = {
 	url: string;
 	homepage: string;
-	tabs: { uuid: string; title: string }[];
+	tabs: { uuid: string; title: string; url: string }[];
 	active_tab_id?: string;
 	show_omnibox: boolean;
 };
@@ -53,6 +53,24 @@ export class App extends React.Component<AppProps, AppState> {
 		ipcRenderer.on("tab-list", (event, args) => {
 			this.setState({
 				tabs: args.tabs,
+			});
+		});
+
+		ipcRenderer.on("url-update", (event, args) => {
+			// incase state changes
+			let tabsCopy = [...this.state.tabs];
+			let activeIdCopy = this.state.active_tab_id;
+
+			tabsCopy.map((tab) => {
+				if (tab.uuid === activeIdCopy) {
+					tab.title = args.title;
+					tab.url = args.url;
+				}
+
+				this.setState({
+					tabs: tabsCopy,
+				});
+				console.log(this.state.tabs);
 			});
 		});
 	}

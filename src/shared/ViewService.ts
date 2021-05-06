@@ -12,8 +12,22 @@ export function createBrowserView(mainWindow : BrowserWindow) {
 
 	view.webContents.loadURL('https://duckduckgo.com');
 
+	subscribeBrowserView(view, mainWindow);
+
 	return {
 		uuid: uuid(),
+		url: view.webContents.getURL,
+		title: view.webContents.getTitle(),
 		view: view
 	}
+}
+
+function subscribeBrowserView(view : BrowserView, mainWindow : BrowserWindow){
+	view.webContents.on("will-navigate", (e, url) => {
+
+		mainWindow.webContents.send('url-update', {
+			url: url,
+			title: view.webContents.getTitle()
+		});
+	})
 }

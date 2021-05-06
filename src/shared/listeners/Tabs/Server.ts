@@ -1,21 +1,13 @@
 import { App, BrowserWindow, ipcMain } from 'electron';
-import { Store } from '../../Store';
 import { createBrowserView } from '../../ViewService';
+import { Listener } from '../Listener';
 
 /**
  * Holds different IPC events that the main process
  * listens for
  */
-export class ServerListeners {
-	mainWindow: BrowserWindow = null;
-	store: Store = null;
-	app: App = null;
+export class ServerListeners extends Listener {
 
-	constructor(mainWindow: BrowserWindow, app: App) {
-		this.mainWindow = mainWindow;
-		this.store = new Store();
-		this.app = app;
-	}
 	// todo Move stuff out / helper functions ex:for creating new tab
 	registerTabListeners(){
 
@@ -36,7 +28,8 @@ export class ServerListeners {
 			const payload = Object.keys(this.store.views).map(key => {
 				return {
 					uuid: key,
-					title: key
+					title: this.store.views[key].webContents.getTitle(),
+					url: this.store.views[key].webContents.getURL()
 				}
 			});
 
@@ -47,13 +40,17 @@ export class ServerListeners {
 		});
 
 		ipcMain.on('close-tab', (event, args) => {
+			// Destroys all listeners attached to the window
+			this.store.views[args.uuid] = null;
+
 			delete this.store.views[args.uuid];
 
 			this.mainWindow.webContents.send('tab-list', {
 				tabs: Object.keys(this.store.views).map(key => {
 					return {
 						uuid: key,
-						title: key
+						title: this.store.views[key].webContents.getTitle(),
+						url: this.store.views[key].webContents.getURL()
 					};
 				}),
 			})
@@ -86,7 +83,8 @@ export class ServerListeners {
 					tabs: Object.keys(this.store.views).map(key => {
 						return {
 							uuid: key,
-							title: key
+							title: this.store.views[key].webContents.getTitle(),
+							url: this.store.views[key].webContents.getURL()
 						};
 					}),
 				});
@@ -95,12 +93,25 @@ export class ServerListeners {
 
 			const { id, x, y, w, h } = args;
 
+			// Resize active one first
 			if ( (id in this.store.views) ) {
 				// update view bounds
 				this.store.views[id].setBounds({ x, y, width: w, height: h });
 			} else {
 				console.error("invalid view id received: " + id);
 			}
+
+			Object.keys(this.store.views).map(key => {
+				if (key === id) return;
+				else {
+					this.store.views[key].setBounds({
+						x,
+						y,
+						width: w,
+						height:h
+					});
+				}
+			});
 		});
 
 		ipcMain.on("render-existing", (event, args) => {

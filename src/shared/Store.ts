@@ -15,7 +15,7 @@ export class Store {
 	}
 
 	getBrowserView(uuid : string) {
-
+		return this.views[uuid];
 	}
 
 
