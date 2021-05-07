@@ -1,4 +1,4 @@
-import { BrowserView, BrowserWindow } from "electron";
+import { BrowserView, BrowserWindow, systemPreferences } from "electron";
 import { uuid } from 'uuidv4';
 /**
  * Responsible for managing acitons in the main process
@@ -29,5 +29,14 @@ function subscribeBrowserView(view : BrowserView, mainWindow : BrowserWindow){
 			url: url,
 			title: view.webContents.getTitle()
 		});
-	})
+	});
+}
+
+export function destoryBrowserView(view: BrowserView) {
+
+	let pid : number = view.webContents.getOSProcessId();
+
+	view = null;
+
+	process.kill(pid);
 }

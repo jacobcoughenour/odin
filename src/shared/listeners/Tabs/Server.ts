@@ -1,6 +1,7 @@
 import { App, BrowserWindow, ipcMain } from 'electron';
 import { createBrowserView } from '../../ViewService';
 import { Listener } from '../Listener';
+import { destoryBrowserView } from '../../ViewService';
 
 /**
  * Holds different IPC events that the main process
@@ -19,7 +20,8 @@ export class ServerListeners extends Listener {
 			const data = createBrowserView(this.mainWindow);
 
 			this.store.views[data.uuid] = data.view;
-			this.mainWindow.setTopBrowserView(data.view);
+			this.store.viewIndex.push(data.uuid);
+			this.mainWindow.addBrowserView(data.view);
 
 			this.mainWindow.webContents.send('updateViewId', {
 				viewid: data.uuid
@@ -41,16 +43,22 @@ export class ServerListeners extends Listener {
 
 		ipcMain.on('close-tab', (event, args) => {
 			// Destroys all listeners attached to the window
-			this.store.views[args.uuid] = null;
+			let uuidIndex: number = this.store.getViewIndex(args.uuid);
+			destoryBrowserView(this.store.views[args.uuid]);
+			// Gets next available tab
+			if (uuidIndex == this.store.viewIndex.length) uuidIndex--;
+			else uuidIndex++;
 
 			delete this.store.views[args.uuid];
+
+			this.mainWindow.addBrowserView(this.store.views[this.store.viewIndex[uuidIndex]]);
 
 			this.mainWindow.webContents.send('tab-list', {
 				tabs: Object.keys(this.store.views).map(key => {
 					return {
 						uuid: key,
 						title: this.store.views[key].webContents.getTitle(),
-						url: this.store.views[key].webContents.getURL()
+						url: this.store.views[key].webContents.getURL(),
 					};
 				}),
 			})
@@ -115,7 +123,8 @@ export class ServerListeners extends Listener {
 		});
 
 		ipcMain.on("render-existing", (event, args) => {
-			this.mainWindow.setTopBrowserView(this.store.views[args.uuid]);
+			this.mainWindow.removeBrowserView(this.store.views[args.prev_uuid]);
+			this.mainWindow.addBrowserView(this.store.views[args.new_uuid]);
 		});
 
 		// todo tabs on start up

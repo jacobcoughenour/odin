@@ -144,7 +144,8 @@ export class App extends React.Component<AppProps, AppState> {
 									active={active_tab_id === e.uuid}
 									onInactiveClick={() => {
 										ipcRenderer.send("render-existing", {
-											uuid: e.uuid,
+											new_uuid: e.uuid,
+											prev_uuid: active_tab_id,
 										});
 
 										this.setState({
