@@ -1,6 +1,5 @@
-import { app, BrowserWindow, BrowserView, Rectangle } from "electron";
-import { createBrowserView, ServerListeners } from './shared';
-import { ipcMain } from "electron";
+import { app, BrowserWindow } from "electron";
+import { ServerListeners } from "./shared";
 declare const MAIN_WINDOW_WEBPACK_ENTRY: any;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -23,7 +22,6 @@ const createWindow = (): void => {
 			plugins: true,
 			nodeIntegration: true,
 			contextIsolation: false,
-			enableRemoteModule: true,
 		},
 		backgroundColor: "#333333",
 	});
@@ -36,7 +34,12 @@ const createWindow = (): void => {
 		mainWindow.webContents.openDevTools();
 
 	serverListeners = new ServerListeners(mainWindow, app);
+	serverListeners.registerHandlers();
 	serverListeners.registerListeners();
+
+	// create a tab on startup
+	serverListeners.createTab();
+	serverListeners.sendTabsState();
 };
 
 // This method will be called when Electron has finished

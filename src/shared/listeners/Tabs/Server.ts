@@ -1,72 +1,170 @@
-import { App, BrowserWindow, ipcMain } from 'electron';
-import { createBrowserView } from '../../ViewService';
-import { Listener } from '../Listener';
-import { destoryBrowserView } from '../../ViewService';
+import { BrowserWindow, ipcMain } from "electron";
+import { createAndAddBrowserView } from "../../ViewService";
+import { Listener } from "../Listener";
+import { destroyBrowserView } from "../../ViewService";
+
+/**
+ * The payload sent on the tab-list channel.
+ */
+export type TabListPayload = {
+	tabs: { [key: string]: {} };
+	tab_order: string[];
+	active_tab_id: string;
+};
+
+// todo put the hydration stuff in it's own class
+
+/**
+ * The payload sent in response to the "hydrate" call.
+ */
+export type HydratePayload = {} & TabListPayload;
 
 /**
  * Holds different IPC events that the main process
- * listens for
+ * listens for.
  */
 export class ServerListeners extends Listener {
+	/**
+	 * @returns TabListPayload for the current store.
+	 */
+	createTabListPayload(): TabListPayload {
+		return {
+			tabs: this.store.viewIndex.reduce((tabs, id) => {
+				const view = this.store.views[id];
+				tabs[id] = {
+					title: view.webContents.getTitle(),
+					url: view.webContents.getURL(),
+				};
+				return tabs;
+			}, {} as { [key: string]: {} }),
+			tab_order: this.store.viewIndex,
+			active_tab_id: this.store.activeViewID,
+		};
+	}
 
-	// todo Move stuff out / helper functions ex:for creating new tab
-	registerTabListeners(){
+	/**
+	 * Send an updated tab-list payload to the window.
+	 * Call this after you have made all your changes to the tabs state.
+	 */
+	sendTabsState() {
+		this.mainWindow.webContents.send(
+			"tab-list",
+			this.createTabListPayload()
+		);
+	}
 
-		ipcMain.on('refresh', () => {
-			this.mainWindow.reload()
-		})
+	// todo should switchActiveTabID() and createTab() be here?
 
-		ipcMain.on('new-tab', () => {
-			const data = createBrowserView(this.mainWindow);
+	/**
+	 * Switches to the given tab ID. This swaps the the BrowserViews.
+	 * You need to call sendTabsState() separately to inform the front-end.
+	 * @param active_tab_id
+	 */
+	switchActiveTabID(active_tab_id: string): void {
+		const next = this.store.views[active_tab_id];
+		if (!next) {
+			console.error(
+				"tried to set active tab to invalid id: " + active_tab_id
+			);
+			return;
+		}
 
-			this.store.views[data.uuid] = data.view;
-			this.store.viewIndex.push(data.uuid);
-			this.mainWindow.addBrowserView(data.view);
+		// hide active view if one is active
+		if (this.store.activeViewID) {
+			const prev = this.store.views[this.store.activeViewID];
+			if (!prev) {
+				console.error(
+					"active view id is invalid: " + this.store.activeViewID
+				);
+			} else {
+				this.mainWindow.removeBrowserView(prev);
+			}
+		}
 
-			this.mainWindow.webContents.send('updateViewId', {
-				viewid: data.uuid
-			});
+		this.store.activeViewID = active_tab_id;
+		this.mainWindow.addBrowserView(next);
+	}
 
-			const payload = Object.keys(this.store.views).map(key => {
+	createTab(): string {
+		const tab = createAndAddBrowserView(
+			this.mainWindow,
+			"https://www.duckduckgo.com"
+		);
+
+		// register tab in store
+		this.store.views[tab.uuid] = tab.view;
+		this.store.viewIndex.push(tab.uuid);
+
+		// todo we shouldn't make it active if it was opened with middle-click.
+
+		this.switchActiveTabID(tab.uuid);
+		return tab.uuid;
+	}
+
+	registerHandlers() {
+		ipcMain.handle(
+			"hydrate",
+			(): HydratePayload => {
 				return {
-					uuid: key,
-					title: this.store.views[key].webContents.getTitle(),
-					url: this.store.views[key].webContents.getURL()
-				}
-			});
+					...this.createTabListPayload(),
+				};
+			}
+		);
+	}
 
-			this.mainWindow.webContents.send('tab-list', {
-				tabs: payload
-			});
-
-		});
-
-		ipcMain.on('close-tab', (event, args) => {
-			// Destroys all listeners attached to the window
-			let uuidIndex: number = this.store.getViewIndex(args.uuid);
-			destoryBrowserView(this.store.views[args.uuid]);
-			// Gets next available tab
-			if (uuidIndex == this.store.viewIndex.length) uuidIndex--;
-			else uuidIndex++;
-
-			delete this.store.views[args.uuid];
-
-			this.mainWindow.addBrowserView(this.store.views[this.store.viewIndex[uuidIndex]]);
-
-			this.mainWindow.webContents.send('tab-list', {
-				tabs: Object.keys(this.store.views).map(key => {
-					return {
-						uuid: key,
-						title: this.store.views[key].webContents.getTitle(),
-						url: this.store.views[key].webContents.getURL(),
-					};
-				}),
-			})
-
-			if (Object.keys(this.store.views).length === 0) {
-				this.app.quit();
+	registerListeners() {
+		ipcMain.on("refresh-active-tab", () => {
+			// get the active tab
+			const active = this.store.views[this.store.activeViewID];
+			if (!active) {
+				console.error(
+					"active view id is invalid: " + this.store.activeViewID
+				);
+				return;
 			}
 
+			// reload the tab
+			active.webContents.reload();
+		});
+
+		ipcMain.on("set-active-tab", (_event, args) => {
+			this.switchActiveTabID(args.uuid);
+			this.sendTabsState();
+		});
+
+		ipcMain.on("new-tab", () => {
+			this.createTab();
+			// send new state
+			this.sendTabsState();
+		});
+
+		ipcMain.on("close-tab", (_event, args) => {
+			let uuidIndex: number = this.store.getTabOrderIndex(args.uuid);
+			const view = this.store.views[args.uuid];
+
+			// Destroys all listeners attached to the window
+			destroyBrowserView(view);
+
+			// unregister from view lists
+			delete this.store.views[args.uuid];
+			this.store.viewIndex = this.store.viewIndex.filter(
+				(id) => id !== args.uuid
+			);
+
+			// close window if last tab
+			if (this.store.viewIndex.length === 0) {
+				this.app.quit();
+				return;
+			}
+
+			// Gets next available tab
+			uuidIndex = Math.min(uuidIndex, this.store.viewIndex.length - 1);
+
+			// Switch to next tab
+			this.switchActiveTabID(this.store.viewIndex[uuidIndex]);
+
+			// Send new tab list
+			this.sendTabsState();
 		});
 
 		ipcMain.on("update-browser-view-bounds", (event, args) => {
@@ -75,84 +173,34 @@ export class ServerListeners extends Listener {
 
 			var views = window.getBrowserViews();
 
-			// Default browserview if none exist
+			// Default BrowserView if none exists
 			if (views.length === 0) {
-
-				const data = createBrowserView(this.mainWindow);
-				this.store.views[data.uuid] = data.view;
 				// First BrowserView, so overwrite default value from client
-				args.id = data.uuid;
-
-				this.mainWindow.webContents.send('updateViewId', {
-					viewid: data.uuid
-				})
-
-				this.mainWindow.webContents.send('tab-list', {
-					tabs: Object.keys(this.store.views).map(key => {
-						return {
-							uuid: key,
-							title: this.store.views[key].webContents.getTitle(),
-							url: this.store.views[key].webContents.getURL()
-						};
-					}),
-				});
-
+				args.id = this.createTab();
+				this.sendTabsState();
 			}
 
 			const { id, x, y, w, h } = args;
 
 			// Resize active one first
-			if ( (id in this.store.views) ) {
+			if (id in this.store.views) {
 				// update view bounds
 				this.store.views[id].setBounds({ x, y, width: w, height: h });
 			} else {
 				console.error("invalid view id received: " + id);
 			}
 
-			Object.keys(this.store.views).map(key => {
+			this.store.viewIndex.map((key) => {
 				if (key === id) return;
 				else {
 					this.store.views[key].setBounds({
 						x,
 						y,
 						width: w,
-						height:h
+						height: h,
 					});
 				}
 			});
 		});
-
-		ipcMain.on("render-existing", (event, args) => {
-			this.mainWindow.removeBrowserView(this.store.views[args.prev_uuid]);
-			this.mainWindow.addBrowserView(this.store.views[args.new_uuid]);
-		});
-
-		// todo tabs on start up
-		// ipcMain.on("startup", (event, args) => {
-		// 	const data = createBrowserView(this.mainWindow);
-		// 	this.store.views[data.uuid] = data.view;
-		// 	// First BrowserView, so overwrite default value from client
-		// 	args.id = data.uuid;
-
-		// 	this.mainWindow.webContents.send('updateViewId', {
-		// 		viewid: data.uuid
-		// 	})
-		// 	this.mainWindow.webContents.send('tab-list', {
-		// 		tabs: Object.keys(this.store.views).map(key => {
-		// 			return {
-		// 				uuid: key,
-		// 				title: key
-		// 			};
-		// 		}),
-		// 	});
-
-
-		// });
-
-
-	}
-
-	registerListeners(){
-		this.registerTabListeners();
 	}
 }

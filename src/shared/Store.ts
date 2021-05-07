@@ -1,14 +1,17 @@
 import { BrowserView } from "electron";
 
-
 interface Bundle {
-	[key: string]: string[]
+	[key: string]: string[];
 }
 
 export class Store {
-	views: {[key: string]: BrowserView } = null;
 	bundles: Bundle = null;
+
+	// todo maybe we create a "registry" class to keep views and viewIndex in sync?
+	views: { [key: string]: BrowserView } = null;
 	viewIndex: string[] = null;
+
+	activeViewID: string;
 
 	constructor() {
 		this.views = {};
@@ -16,13 +19,11 @@ export class Store {
 		this.viewIndex = [];
 	}
 
-	getBrowserView(uuid : string) {
+	getBrowserView(uuid: string) {
 		return this.views[uuid];
 	}
 
-	getViewIndex(uuid: string) {
+	getTabOrderIndex(uuid: string) {
 		return this.viewIndex.indexOf(uuid);
 	}
-
-
 }

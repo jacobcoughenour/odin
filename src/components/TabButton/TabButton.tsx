@@ -1,16 +1,14 @@
 import * as React from "react";
 import clsx from "clsx";
-import { ButtonBase } from "..";
-import { uuid } from "uuidv4";
 import { MouseEventHandler } from "react";
-import { Globe, X } from "react-feather";
-import { ButtonBaseAnchor } from "../ButtonBase";
+import { X } from "react-feather";
 import omit from "object.omit";
 
 export type TabButtonProps = {
 	uuid: string;
 	icon?: string;
 	title: string;
+	url: string;
 	active: boolean;
 	onInactiveClick?: MouseEventHandler<HTMLButtonElement>;
 	onActiveClick?: MouseEventHandler<HTMLButtonElement>;
@@ -42,6 +40,7 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 				"onCloseClick",
 				"active",
 			])}
+			title={`${props.title}\n${props.url}`}
 			onClick={onTabClick}
 			onAuxClick={onTabAuxClick}
 			className={clsx(
@@ -52,7 +51,6 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 				"inline-flex",
 				"px-2",
 				"py-2",
-				"h-10",
 				"box-content",
 				"border",
 				"rounded-t-lg",
@@ -75,17 +73,19 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 			)}
 			style={{ marginLeft: -1 }}
 		>
-			{/* <Globe size={16} className={"p-1 bg-red-700"} /> */}
+			{/* todo put favicon here */}
 			<span
 				className={clsx(
 					"ml-2",
 					"cursor-pointer",
 					"overflow-clip",
 					"whitespace-nowrap",
-					"overflow-hidden"
+					"overflow-hidden",
+					"text-left"
 				)}
 				style={{
 					maxWidth: 160,
+					width: 160,
 					// this adds that fading out when the tab title is truncated
 					WebkitMaskImage:
 						"-webkit-gradient(linear, 80% 0%, 100% 0%, from(rgb(0, 0, 0)), to(rgba(0, 0, 0, 0)))",
