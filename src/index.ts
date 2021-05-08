@@ -30,8 +30,9 @@ const createWindow = (): void => {
 	mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
 	// Open the DevTools.
-	if (process.env.NODE_ENV === "development")
-		mainWindow.webContents.openDevTools();
+	if (process.env.NODE_ENV === "development") {
+		// mainWindow.webContents.openDevTools();
+	}
 
 	serverListeners = new ServerListeners(mainWindow, app);
 	serverListeners.registerHandlers();

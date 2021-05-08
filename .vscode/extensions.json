@@ -3,6 +3,7 @@
 		"csstools.postcss",
 		"aaron-bond.better-comments",
 		"esbenp.prettier-vscode",
-		"bradlc.vscode-tailwindcss"
+		"bradlc.vscode-tailwindcss",
+		"msjsdiag.debugger-for-chrome"
 	]
 }
