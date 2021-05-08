@@ -1,5 +1,8 @@
 import { app, BrowserWindow } from "electron";
 import { ServerListeners } from "./shared";
+import installExtension, {
+	REACT_DEVELOPER_TOOLS,
+} from "electron-devtools-installer";
 declare const MAIN_WINDOW_WEBPACK_ENTRY: any;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -29,9 +32,11 @@ const createWindow = (): void => {
 	// and load the index.html of the app.
 	mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-	// Open the DevTools.
+	// Setup devtools
 	if (process.env.NODE_ENV === "development") {
-		// mainWindow.webContents.openDevTools();
+		installExtension([REACT_DEVELOPER_TOOLS])
+			.then((name) => console.log(`Installed Extension: ${name}`))
+			.catch((err) => console.error("Error installing extension:", err));
 	}
 
 	serverListeners = new ServerListeners(mainWindow, app);
