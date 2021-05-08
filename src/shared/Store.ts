@@ -1,29 +1,30 @@
 import { BrowserView } from "electron";
+import { OrderedMap } from './OrderedMap';
 
 interface Bundle {
 	[key: string]: string[];
 }
 
 export class Store {
+
 	bundles: Bundle = null;
 
-	// todo maybe we create a "registry" class to keep views and viewIndex in sync?
-	views: { [key: string]: BrowserView } = null;
-	viewIndex: string[] = null;
+	views: OrderedMap = null;
 
 	activeViewID: string;
 
 	constructor() {
-		this.views = {};
+		// this.views = {};
 		this.bundles = {};
-		this.viewIndex = [];
+		// this.viewIndex = [];
+		this.views = new OrderedMap();
 	}
 
 	getBrowserView(uuid: string) {
-		return this.views[uuid];
+		return this.views.get(uuid);
 	}
 
 	getTabOrderIndex(uuid: string) {
-		return this.viewIndex.indexOf(uuid);
+		return this.views.getLocationOfKey(uuid);
 	}
 }

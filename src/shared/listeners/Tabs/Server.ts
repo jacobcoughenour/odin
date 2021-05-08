@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { BrowserView, BrowserWindow, ipcMain } from "electron";
 import { createAndAddBrowserView } from "../../ViewService";
 import { Listener } from "../Listener";
 import { destroyBrowserView } from "../../ViewService";
@@ -29,15 +29,21 @@ export class ServerListeners extends Listener {
 	 */
 	createTabListPayload(): TabListPayload {
 		return {
-			tabs: this.store.viewIndex.reduce((tabs, id) => {
-				const view = this.store.views[id];
+			tabs: this.store.views.getKeys().reduce((tabs, id) => {
+				console.log(tabs);
+				console.log(id);
+
+				const view: BrowserView = this.store.views.get(id);
+
+				// console.log(view.webContents.getTitle());
+
 				tabs[id] = {
 					title: view.webContents.getTitle(),
 					url: view.webContents.getURL(),
 				};
 				return tabs;
 			}, {} as { [key: string]: {} }),
-			tab_order: this.store.viewIndex,
+			tab_order: this.store.views.getKeys(),
 			active_tab_id: this.store.activeViewID,
 		};
 	}
@@ -61,7 +67,8 @@ export class ServerListeners extends Listener {
 	 * @param active_tab_id
 	 */
 	switchActiveTabID(active_tab_id: string): void {
-		const next = this.store.views[active_tab_id];
+		// console.log('active', active_tab_id);
+		const next = this.store.views.get(active_tab_id);
 		if (!next) {
 			console.error(
 				"tried to set active tab to invalid id: " + active_tab_id
@@ -71,7 +78,7 @@ export class ServerListeners extends Listener {
 
 		// hide active view if one is active
 		if (this.store.activeViewID) {
-			const prev = this.store.views[this.store.activeViewID];
+			const prev = this.store.views.get(this.store.activeViewID);
 			if (!prev) {
 				console.error(
 					"active view id is invalid: " + this.store.activeViewID
@@ -92,8 +99,7 @@ export class ServerListeners extends Listener {
 		);
 
 		// register tab in store
-		this.store.views[tab.uuid] = tab.view;
-		this.store.viewIndex.push(tab.uuid);
+		this.store.views.push(tab.uuid, tab.view);
 
 		// todo we shouldn't make it active if it was opened with middle-click.
 
@@ -115,7 +121,7 @@ export class ServerListeners extends Listener {
 	registerListeners() {
 		ipcMain.on("refresh-active-tab", () => {
 			// get the active tab
-			const active = this.store.views[this.store.activeViewID];
+			const active = this.store.views.get(this.store.activeViewID);
 			if (!active) {
 				console.error(
 					"active view id is invalid: " + this.store.activeViewID
@@ -140,28 +146,29 @@ export class ServerListeners extends Listener {
 
 		ipcMain.on("close-tab", (_event, args) => {
 			let uuidIndex: number = this.store.getTabOrderIndex(args.uuid);
-			const view = this.store.views[args.uuid];
+			const view: BrowserView = this.store.views.get(args.uuid);
+
+			// unregister from view lists
+			this.store.views.remove(args.uuid);
 
 			// Destroys all listeners attached to the window
 			destroyBrowserView(view);
 
-			// unregister from view lists
-			delete this.store.views[args.uuid];
-			this.store.viewIndex = this.store.viewIndex.filter(
-				(id) => id !== args.uuid
-			);
-
 			// close window if last tab
-			if (this.store.viewIndex.length === 0) {
+			if (this.store.views.getKeys().length === 0) {
 				this.app.quit();
 				return;
 			}
 
 			// Gets next available tab
-			uuidIndex = Math.min(uuidIndex, this.store.viewIndex.length - 1);
+			uuidIndex = Math.min(uuidIndex, this.store.views.getKeys().length - 1);
+
+			// updates activeViewID to become the tab that
+			// is active after one is closed
+			this.store.activeViewID = this.store.views.getByIndex(uuidIndex);
 
 			// Switch to next tab
-			this.switchActiveTabID(this.store.viewIndex[uuidIndex]);
+			this.switchActiveTabID(this.store.views.getByIndex(uuidIndex));
 
 			// Send new tab list
 			this.sendTabsState();
@@ -183,17 +190,17 @@ export class ServerListeners extends Listener {
 			const { id, x, y, w, h } = args;
 
 			// Resize active one first
-			if (id in this.store.views) {
+			if (id in this.store.views.getMap()) {
 				// update view bounds
-				this.store.views[id].setBounds({ x, y, width: w, height: h });
+				this.store.views.get(id).setBounds({ x, y, width: w, height: h });
 			} else {
 				console.error("invalid view id received: " + id);
 			}
 
-			this.store.viewIndex.map((key) => {
+			this.store.views.getKeys().map((key) => {
 				if (key === id) return;
 				else {
-					this.store.views[key].setBounds({
+					this.store.views.get(key).setBounds({
 						x,
 						y,
 						width: w,
