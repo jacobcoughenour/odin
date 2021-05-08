@@ -30,12 +30,8 @@ export class ServerListeners extends Listener {
 	createTabListPayload(): TabListPayload {
 		return {
 			tabs: this.store.views.getKeys().reduce((tabs, id) => {
-				console.log(tabs);
-				console.log(id);
 
 				const view: BrowserView = this.store.views.get(id);
-
-				// console.log(view.webContents.getTitle());
 
 				tabs[id] = {
 					title: view.webContents.getTitle(),
@@ -67,7 +63,6 @@ export class ServerListeners extends Listener {
 	 * @param active_tab_id
 	 */
 	switchActiveTabID(active_tab_id: string): void {
-		// console.log('active', active_tab_id);
 		const next = this.store.views.get(active_tab_id);
 		if (!next) {
 			console.error(
