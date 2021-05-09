@@ -2,6 +2,8 @@ import { BrowserView, BrowserWindow, ipcMain } from "electron";
 import { createAndAddBrowserView } from "../../ViewService";
 import { Listener } from "../Listener";
 import { destroyBrowserView } from "../../ViewService";
+import normalizeUrl from "normalize-url";
+import isUrl from "is-url";
 
 /**
  * The payload sent on the tab-list channel.
@@ -30,7 +32,6 @@ export class ServerListeners extends Listener {
 	createTabListPayload(): TabListPayload {
 		return {
 			tabs: this.store.views.getKeys().reduce((tabs, id) => {
-
 				const view: BrowserView = this.store.views.get(id);
 
 				tabs[id] = {
@@ -114,6 +115,27 @@ export class ServerListeners extends Listener {
 	}
 
 	registerListeners() {
+		ipcMain.on("set-active-tab-url", (_event, { url }) => {
+			// get the active tab
+			const active = this.store.views.get(this.store.activeViewID);
+			if (!active) {
+				console.error(
+					"active view id is invalid: " + this.store.activeViewID
+				);
+				return;
+			}
+
+			if (isUrl(normalizeUrl(url))) {
+				url = normalizeUrl(url);
+			} else {
+				url = `https://duckduckgo.com/?q=${url}`;
+			}
+
+			active.webContents.loadURL(url, {
+				// userAgent: "Chrome",
+			});
+		});
+
 		ipcMain.on("refresh-active-tab", () => {
 			// get the active tab
 			const active = this.store.views.get(this.store.activeViewID);
@@ -150,13 +172,13 @@ export class ServerListeners extends Listener {
 			destroyBrowserView(view);
 
 			// close window if last tab
-			if (this.store.views.getKeys().length === 0) {
+			if (this.store.views.length === 0) {
 				this.app.quit();
 				return;
 			}
 
 			// Gets next available tab
-			uuidIndex = Math.min(uuidIndex, this.store.views.getKeys().length - 1);
+			uuidIndex = Math.min(uuidIndex, this.store.views.length - 1);
 
 			// updates activeViewID to become the tab that
 			// is active after one is closed
@@ -187,7 +209,9 @@ export class ServerListeners extends Listener {
 			// Resize active one first
 			if (id in this.store.views.getMap()) {
 				// update view bounds
-				this.store.views.get(id).setBounds({ x, y, width: w, height: h });
+				this.store.views
+					.get(id)
+					.setBounds({ x, y, width: w, height: h });
 			} else {
 				console.error("invalid view id received: " + id);
 			}
