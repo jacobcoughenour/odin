@@ -5,12 +5,12 @@ import {
 	ArrowRight,
 	RotateCw,
 	Plus,
-	Star,
 	MoreVertical,
 	User,
 	X,
 	ChevronDown,
 	ChevronUp,
+	Music,
 	Minimize2,
 } from "react-feather";
 import {
@@ -31,6 +31,7 @@ type AppProps = {};
  */
 type AppState = {
 	window_mode: "normal" | "maximized" | "fullscreen";
+	title_bar_style: "full" | "compact" | "extra-compact";
 	/**
 	 * The info for each tab stored by their ID. Use tab_order to get the order
 	 * they are rendered in.
@@ -70,6 +71,7 @@ export class App extends React.Component<AppProps, AppState> {
 		 **/
 		this.state = {
 			window_mode: "normal",
+			title_bar_style: "compact",
 			tabs: {},
 			tab_order: [],
 			show_omnibox: false,
@@ -123,21 +125,54 @@ export class App extends React.Component<AppProps, AppState> {
 			active_tab_id,
 			show_omnibox,
 			window_mode,
+			title_bar_style,
 		} = this.state;
 
 		// get the current tab info but fallback to defaults if we need to.
 		const current_tab = tabs[active_tab_id] || { url: "" };
 
+		const is_maximized = window_mode === "maximized";
+		const is_fullscreen = !is_maximized && window_mode === "fullscreen";
+
+		const show_window_buttons = true;
+		const window_buttons_left_side = false;
+		const show_window_frame_border = false;
+
+		const compact = is_fullscreen || title_bar_style !== "full";
+		const extra_compact =
+			is_fullscreen || title_bar_style === "extra-compact";
+
+		const top_window_padding = !compact || extra_compact ? 0 : 16;
+
+		const tap_height_offset = 4;
+
 		return (
-			<div className={`border-purple-500 flex flex-col h-full border`}>
+			<div
+				className={clsx(
+					"flex",
+					"flex-col",
+					"h-full",
+					"border",
+					show_window_frame_border
+						? "border-purple-500"
+						: "border-black",
+					"rounded-sm",
+					"overflow-hidden"
+				)}
+			>
 				{/* Window Header */}
 				<div
 					className={clsx(
 						"bg-current",
 						"space-x-0",
 						"flex",
+						"border-b",
 						"border-purple-500",
-						"border-b"
+						compact
+							? window_buttons_left_side
+								? "flex-row-reverse"
+								: "flex-row"
+							: "flex-col-reverse"
 					)}
 				>
 					<div
@@ -145,12 +180,20 @@ export class App extends React.Component<AppProps, AppState> {
 							"region-drag",
 							"flex",
 							"flex-1",
-							"pt-4",
+							show_window_buttons && compact
+								? [
+										"pt-4",
+										window_buttons_left_side
+											? "pl-0 pr-2"
+											: "pl-2 pr-0",
+								  ]
+								: ["pt-2", "px-2"],
 							"pb-0",
-							"pl-2",
-							"pr-1",
 							"space-x-0"
 						)}
+						style={{
+							paddingTop: tap_height_offset + top_window_padding,
+						}}
 					>
 						{/* Nav buttons */}
 						<IconButton icon={ArrowLeft} size={22} />
@@ -174,12 +217,16 @@ export class App extends React.Component<AppProps, AppState> {
 								"px-2",
 								"flex-1"
 							)}
+							style={{
+								marginTop: -tap_height_offset,
+							}}
 						>
 							{/* Tabs list */}
 							<div
 								className={clsx(
 									"region-drag",
-									show_omnibox && "opacity-50",
+									// show_omnibox && "opacity-50",
+									show_omnibox && "hidden",
 									"absolute",
 									"flex",
 									"w-full"
@@ -241,7 +288,9 @@ export class App extends React.Component<AppProps, AppState> {
 									"w-full",
 									"flex",
 									"justify-center",
-									!show_omnibox && "hidden"
+									"mt-1",
+									!show_omnibox && "hidden",
+									"overflow-hidden"
 								)}
 							>
 								<Omnibox
@@ -261,8 +310,22 @@ export class App extends React.Component<AppProps, AppState> {
 								/>
 							</div>
 						</div>
+						<IconButton icon={Music} size={18} />
 						<IconButton icon={User} size={18} />
-						<IconButton icon={MoreVertical} size={18} />
+						<IconButton
+							icon={MoreVertical}
+							size={18}
+							onClick={() => {
+								this.setState({
+									title_bar_style:
+										title_bar_style === "full"
+											? "compact"
+											: title_bar_style === "compact"
+											? "extra-compact"
+											: "full",
+								});
+							}}
+						/>
 					</div>
 					<div
 						className={clsx(

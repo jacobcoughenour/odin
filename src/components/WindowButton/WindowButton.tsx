@@ -1,14 +1,16 @@
 import * as React from "react";
 import clsx from "clsx";
 import { ButtonBase } from "..";
-import { Icon } from "react-feather";
+import { Icon, IconProps } from "react-feather";
 
 export type WindowButtonProps = {
 	icon: Icon;
-} & React.DetailedHTMLProps<
-	React.ButtonHTMLAttributes<HTMLButtonElement>,
-	HTMLButtonElement
->;
+	iconprops?: React.SVGAttributes<SVGElement>;
+} & IconProps &
+	React.DetailedHTMLProps<
+		React.ButtonHTMLAttributes<HTMLButtonElement>,
+		HTMLButtonElement
+	>;
 
 const WindowButton: React.FC<WindowButtonProps> = (props) => {
 	const IconComp = props.icon;
@@ -31,7 +33,12 @@ const WindowButton: React.FC<WindowButtonProps> = (props) => {
 			<IconComp
 				size={18}
 				color={props.color}
-				className={clsx("inline", "pointer-events-none")}
+				className={clsx(
+					"inline",
+					"pointer-events-none",
+					props.iconprops && props.iconprops.className
+				)}
+				{...props.iconprops}
 			/>
 		</ButtonBase>
 	);

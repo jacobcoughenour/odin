@@ -4,11 +4,13 @@ import { ButtonBase } from "..";
 import { Icon, IconProps } from "react-feather";
 
 export type IconButtonProps = {
-	icon: Icon
-	iconprops?: React.SVGAttributes<SVGElement>
-}
-	& IconProps
-	& React.DetailedHTMLProps<React.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>;
+	icon: Icon;
+	iconprops?: React.SVGAttributes<SVGElement>;
+} & IconProps &
+	React.DetailedHTMLProps<
+		React.ButtonHTMLAttributes<HTMLButtonElement>,
+		HTMLButtonElement
+	>;
 
 const IconButton: React.FC<IconButtonProps> = (props) => {
 	const IconComp = props.icon;
@@ -24,7 +26,8 @@ const IconButton: React.FC<IconButtonProps> = (props) => {
 				"h-8",
 				"w-8",
 				props.className
-			)}>
+			)}
+		>
 			<IconComp
 				size={props.size}
 				color={props.color}
@@ -37,6 +40,5 @@ const IconButton: React.FC<IconButtonProps> = (props) => {
 		</ButtonBase>
 	);
 };
-
 
 export default IconButton;

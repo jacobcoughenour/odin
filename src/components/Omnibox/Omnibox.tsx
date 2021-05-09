@@ -54,7 +54,7 @@ const Omnibox: React.FC<OmniboxProps> = ({
 				"focus:outline-none",
 				"w-full",
 				"max-w-sm",
-				"rounded-full",
+				"rounded-lg",
 				"px-1",
 				className
 			)}

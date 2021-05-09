@@ -1,6 +1,7 @@
 import * as React from "react";
 import clsx from "clsx";
 import { MouseEventHandler } from "react";
+import { Property } from "csstype";
 import { X } from "react-feather";
 import omit from "object.omit";
 
@@ -45,8 +46,6 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 			onAuxClick={onTabAuxClick}
 			className={clsx(
 				"focus:outline-none",
-				// "focus:bg-gray-700",
-				// "hover:bg-gray-000",
 				"stroke-current",
 				"inline-flex",
 				"px-2",
@@ -82,10 +81,9 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 					"flex-1"
 				)}
 				style={{
-					// maxWidth: 160,
 					// this adds that fading out when the tab title is truncated
-					WebkitMaskImage:
-						"-webkit-gradient(linear, 80% 0%, 100% 0%, from(rgb(0, 0, 0)), to(rgba(0, 0, 0, 0)))",
+					WebkitMaskImage: `-webkit-gradient(linear, 80% 0%, 100% 0%, 
+									from(rgb(0, 0, 0)), to(rgba(0, 0, 0, 0)))`,
 				}}
 			>
 				{props.title}
