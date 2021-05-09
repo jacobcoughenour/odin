@@ -11,6 +11,7 @@ import {
 	X,
 	ChevronDown,
 	ChevronUp,
+	Minimize2,
 } from "react-feather";
 import {
 	IconButton,
@@ -29,6 +30,7 @@ type AppProps = {};
  * This is the top-most state for our App component.
  */
 type AppState = {
+	window_mode: "normal" | "maximized" | "fullscreen";
 	/**
 	 * The info for each tab stored by their ID. Use tab_order to get the order
 	 * they are rendered in.
@@ -67,6 +69,7 @@ export class App extends React.Component<AppProps, AppState> {
 		 * render.
 		 **/
 		this.state = {
+			window_mode: "normal",
 			tabs: {},
 			tab_order: [],
 			show_omnibox: false,
@@ -88,14 +91,18 @@ export class App extends React.Component<AppProps, AppState> {
 					state.tabs[uuid].url = url;
 					return state;
 				});
+			})
+			.on("window-mode-update", (_event, { window_mode }) => {
+				this.setState({ window_mode });
 			});
 
 		// now that we have rendered once and have our listeners setup, we get
 		// the _entire_ state from the main process.
 		ipcRenderer
 			.invoke("hydrate")
-			.then(({ tabs, tab_order, active_tab_id }) => {
+			.then(({ tabs, tab_order, active_tab_id, window_mode }) => {
 				this.setState({
+					window_mode,
 					tabs,
 					tab_order,
 					active_tab_id,
@@ -110,7 +117,13 @@ export class App extends React.Component<AppProps, AppState> {
 	}
 
 	render() {
-		const { tabs, tab_order, active_tab_id, show_omnibox } = this.state;
+		const {
+			tabs,
+			tab_order,
+			active_tab_id,
+			show_omnibox,
+			window_mode,
+		} = this.state;
 
 		// get the current tab info but fallback to defaults if we need to.
 		const current_tab = tabs[active_tab_id] || { url: "" };
@@ -251,10 +264,39 @@ export class App extends React.Component<AppProps, AppState> {
 						<IconButton icon={User} size={18} />
 						<IconButton icon={MoreVertical} size={18} />
 					</div>
-					<div className={clsx("region-drag", "overflow-hidden")}>
-						<WindowButton icon={ChevronDown} />
-						<WindowButton icon={ChevronUp} />
-						<WindowButton icon={X} className={"hover:bg-red-700"} />
+					<div
+						className={clsx(
+							"region-drag",
+							"overflow-hidden",
+							!show_window_buttons && "hidden",
+							"p-1",
+							"pb-0",
+							"-mb-0.5",
+							"flex",
+							!window_buttons_left_side && "justify-end"
+						)}
+					>
+						<WindowButton
+							icon={ChevronDown}
+							onClick={() => {
+								ipcRenderer.send("minimize-window");
+							}}
+						/>
+						<WindowButton
+							icon={is_maximized ? Minimize2 : ChevronUp}
+							onClick={() => {
+								is_maximized
+									? ipcRenderer.send("restore-window")
+									: ipcRenderer.send("maximize-window");
+							}}
+						/>
+						<WindowButton
+							icon={X}
+							className={"hover:bg-red-700"}
+							onClick={() => {
+								ipcRenderer.send("close-window");
+							}}
+						/>
 					</div>
 				</div>
 				{/* We use a proxy to tell main where the tab's BrowserView 

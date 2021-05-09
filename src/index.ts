@@ -26,7 +26,7 @@ const createWindow = (): void => {
 			nodeIntegration: true,
 			contextIsolation: false,
 		},
-		backgroundColor: "#333333",
+		backgroundColor: "#101010",
 	});
 
 	// and load the index.html of the app.

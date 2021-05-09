@@ -19,7 +19,9 @@ export type TabListPayload = {
 /**
  * The payload sent in response to the "hydrate" call.
  */
-export type HydratePayload = {} & TabListPayload;
+export type HydratePayload = {
+	window_mode: "normal" | "maximized" | "fullscreen";
+} & TabListPayload;
 
 /**
  * Holds different IPC events that the main process
@@ -54,6 +56,22 @@ export class ServerListeners extends Listener {
 			"tab-list",
 			this.createTabListPayload()
 		);
+	}
+
+	getWindowMode() {
+		if (this.mainWindow) {
+			if (this.mainWindow.isFullScreen()) return "fullscreen";
+			if (this.mainWindow.isMaximized()) return "maximized";
+		}
+		return "normal";
+	}
+
+	sendWindowModeUpdate() {
+		this.mainWindow &&
+			this.mainWindow.webContents &&
+			this.mainWindow.webContents.send("window-mode-update", {
+				window_mode: this.getWindowMode(),
+			});
 	}
 
 	// todo should switchActiveTabID() and createTab() be here?
@@ -108,6 +126,7 @@ export class ServerListeners extends Listener {
 			"hydrate",
 			(): HydratePayload => {
 				return {
+					window_mode: this.getWindowMode(),
 					...this.createTabListPayload(),
 				};
 			}
@@ -190,6 +209,20 @@ export class ServerListeners extends Listener {
 			// Send new tab list
 			this.sendTabsState();
 		});
+
+		ipcMain.on("minimize-window", () => this.mainWindow.minimize());
+		ipcMain.on("maximize-window", () => this.mainWindow.maximize());
+		ipcMain.on("restore-window", () => this.mainWindow.restore());
+		ipcMain.on("close-window", () => this.mainWindow.close());
+		this.mainWindow.on("minimize", () => this.sendWindowModeUpdate());
+		this.mainWindow.on("maximize", () => this.sendWindowModeUpdate());
+		this.mainWindow.on("restore", () => this.sendWindowModeUpdate());
+		this.mainWindow.on("enter-full-screen", () =>
+			this.sendWindowModeUpdate()
+		);
+		this.mainWindow.on("leave-full-screen", () =>
+			this.sendWindowModeUpdate()
+		);
 
 		ipcMain.on("update-browser-view-bounds", (event, args) => {
 			// get the window we received the event from
