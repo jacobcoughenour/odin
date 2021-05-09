@@ -1,7 +1,24 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { ArrowLeft, ArrowRight, RotateCw, Plus } from "react-feather";
-import { IconButton, Omnibox, BrowserViewProxy, TabButton } from "./components";
+import {
+	ArrowLeft,
+	ArrowRight,
+	RotateCw,
+	Plus,
+	Star,
+	MoreVertical,
+	User,
+	X,
+	ChevronDown,
+	ChevronUp,
+} from "react-feather";
+import {
+	IconButton,
+	Omnibox,
+	BrowserViewProxy,
+	TabButton,
+	WindowButton,
+} from "./components";
 import { ipcRenderer } from "electron";
 import "./index.css";
 import clsx from "clsx";
@@ -103,89 +120,141 @@ export class App extends React.Component<AppProps, AppState> {
 				{/* Window Header */}
 				<div
 					className={clsx(
-						"region-drag",
-						"flex-none",
+						"bg-current",
+						"space-x-0",
 						"flex",
 						"border-purple-500",
-						"border-b",
-						"pt-6",
-						"pb-2",
-						"px-4",
-						"bg-current",
-						"space-x-0"
+						"border-b"
 					)}
 				>
-					{/* Nav buttons */}
-					<IconButton icon={ArrowLeft} size={22} />
-					<IconButton disabled icon={ArrowRight} size={22} />
-					<IconButton
-						onClick={() => {
-							ipcRenderer.send("refresh-active-tab");
-						}}
-						icon={RotateCw}
-						size={16}
-						iconprops={{ strokeWidth: 2.2 }}
-					/>
-					{/* We wrap the tabs list and omnibox in this container so
+					<div
+						className={clsx(
+							"region-drag",
+							"flex",
+							"flex-1",
+							"pt-4",
+							"pb-0",
+							"pl-2",
+							"pr-1",
+							"space-x-0"
+						)}
+					>
+						{/* Nav buttons */}
+						<IconButton icon={ArrowLeft} size={22} />
+						<IconButton disabled icon={ArrowRight} size={22} />
+						<IconButton
+							onClick={() => {
+								ipcRenderer.send("refresh-active-tab");
+							}}
+							icon={RotateCw}
+							size={16}
+							iconprops={{ strokeWidth: 2.2 }}
+						/>
+						{/* We wrap the tabs list and omnibox in this container so
 						they share the same space and we toggle between them. */}
-					<div className={"block h-8 px-2"}>
-						{/* Tabs list */}
-						<div className={clsx("h-12", show_omnibox && "hidden")}>
-							{tab_order.map((id) => (
-								<TabButton
-									key={id}
-									uuid={id}
-									title={tabs[id].title}
-									url={tabs[id].url}
-									active={active_tab_id === id}
-									onInactiveClick={() => {
-										// tell main to switch to this tab
-										ipcRenderer.send("set-active-tab", {
-											uuid: id,
-										});
+						<div
+							className={clsx(
+								"region-drag",
+								"block",
+								"relative",
+								"h-10",
+								"px-2",
+								"flex-1"
+							)}
+						>
+							{/* Tabs list */}
+							<div
+								className={clsx(
+									"region-drag",
+									show_omnibox && "opacity-50",
+									"absolute",
+									"flex",
+									"w-full"
+								)}
+								style={{
+									height: "calc(100% + 1px)",
+								}}
+							>
+								{tab_order.map((id) => (
+									<TabButton
+										key={id}
+										uuid={id}
+										title={tabs[id].title}
+										url={tabs[id].url}
+										active={active_tab_id === id}
+										onInactiveClick={() => {
+											// tell main to switch to this tab
+											ipcRenderer.send("set-active-tab", {
+												uuid: id,
+											});
+										}}
+										onActiveClick={() => {
+											// We don't send anything to main
+											// since this is visual only for now.
+											// todo should we handle this in main?
+											this.setState({
+												show_omnibox: true,
+											});
+										}}
+										onCloseClick={() => {
+											// Tell main to close this tab.
+											ipcRenderer.send("close-tab", {
+												uuid: id,
+											});
+										}}
+									/>
+								))}
+								{/* New-Tab button at the end of the list. */}
+								<IconButton
+									className={clsx(
+										"ml-2",
+										"mt-0.5",
+										"mr-4",
+										"flex-none"
+									)}
+									title="Create New Tab"
+									onClick={() => {
+										// Tell main to make a new tab.
+										ipcRenderer.send("new-tab", {});
 									}}
-									onActiveClick={() => {
-										// We don't send anything to main
-										// since this is visual only for now.
-										// todo should we handle this in main?
-										this.setState({ show_omnibox: true });
+									icon={Plus}
+									size={20}
+								/>
+							</div>
+							{/* Omnibox container */}
+							<div
+								className={clsx(
+									"absolute",
+									"w-full",
+									"flex",
+									"justify-center",
+									!show_omnibox && "hidden"
+								)}
+							>
+								<Omnibox
+									focus={show_omnibox}
+									currentURL={current_tab.url}
+									onFocusLost={() => {
+										// Hide the omnibox when the user is no
+										// longer typing in it.
+										this.setState({ show_omnibox: false });
 									}}
-									onCloseClick={() => {
-										// Tell main to close this tab.
-										ipcRenderer.send("close-tab", {
-											uuid: id,
+									onURLSubmit={(url) => {
+										this.setState({ show_omnibox: false });
+										ipcRenderer.send("set-active-tab-url", {
+											url,
 										});
 									}}
 								/>
-							))}
-							{/* New-Tab button at the end of the list. */}
-							<IconButton
-								className={clsx("ml-1", "mb-2")}
-								title="Create New Tab"
-								onClick={() => {
-									// Tell main to make a new tab.
-									ipcRenderer.send("new-tab", {});
-								}}
-								icon={Plus}
-								size={20}
-							/>
+							</div>
 						</div>
-						{/* Omnibox container */}
-						<div
-							className={clsx(
-								"absolute",
-								!show_omnibox && "hidden"
-							)}
-						>
-							<Omnibox
-								currentURL={current_tab.url}
-								onFocusLost={() => {
-									// Hide the omnibox when the user is no
-									// longer typing in it.
-									this.setState({ show_omnibox: false });
-								}}
-							/>
-						</div>
+						<IconButton icon={User} size={18} />
+						<IconButton icon={MoreVertical} size={18} />
+					</div>
+					<div className={clsx("region-drag", "overflow-hidden")}>
+						<WindowButton icon={ChevronDown} />
+						<WindowButton icon={ChevronUp} />
+						<WindowButton icon={X} className={"hover:bg-red-700"} />
 					</div>
 				</div>
 				{/* We use a proxy to tell main where the tab's BrowserView 

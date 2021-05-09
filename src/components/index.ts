@@ -12,3 +12,4 @@ export { default as IconButton, IconButtonProps } from "./IconButton";
 export { default as Omnibox, OmniboxProps } from "./Omnibox";
 export { default as TabButton, TabButtonProps } from "./TabButton";
 export { default as TextButton, TextButtonProps } from "./TextButton";
+export { default as WindowButton, WindowButtonProps } from "./WindowButton";
