@@ -56,22 +56,19 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 				"rounded-t-lg",
 				"border-b-0",
 				"border-transparent",
+				"min-w-0",
+				"w-full",
+				"-ml-px",
+				"text-black",
+				"dark:text-white",
 				props.active
-					? [
-							"bg-black",
-							"text-black",
-							"dark:text-white",
-							"border-purple-500",
-					  ]
-					: [
-							"bg-transparent",
-							"text-gray-900",
-							"dark:text-gray-400",
-							"hover:border-purple-600",
-					  ],
+					? ["bg-black", "border-purple-500"]
+					: ["bg-transparent", "hover:border-purple-600"],
 				props.className
 			)}
-			style={{ marginLeft: -1 }}
+			style={{
+				maxWidth: 240,
+			}}
 		>
 			{/* todo put favicon here */}
 			<span
@@ -81,11 +78,11 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 					"overflow-clip",
 					"whitespace-nowrap",
 					"overflow-hidden",
-					"text-left"
+					"text-left",
+					"flex-1"
 				)}
 				style={{
-					maxWidth: 160,
-					width: 160,
+					// maxWidth: 160,
 					// this adds that fading out when the tab title is truncated
 					WebkitMaskImage:
 						"-webkit-gradient(linear, 80% 0%, 100% 0%, from(rgb(0, 0, 0)), to(rgba(0, 0, 0, 0)))",
@@ -104,6 +101,7 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 							"hover:bg-gray-700",
 							"rounded-full",
 							"p-0.5",
+							"-mt-1",
 							"cursor-pointer"
 						)}
 					/>
