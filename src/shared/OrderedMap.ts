@@ -1,17 +1,17 @@
 /**
  * ADT for implementing a ordered map
  */
-export class OrderedMap {
+export class OrderedMap<T> {
 	// Keeps track of key order
 	private keys: string[] = null;
 	// Maps location to key
-	private keyOrder: { [key: string]: number} = null;
+	private keyOrder: { [key: string]: number } = null;
 	// Maps data to key
-	private values: { [key: string]: any} = {} = null;
+	private values: { [key: string]: T } = ({} = null);
 
 	length: number = 0;
 
-	constructor(){
+	constructor() {
 		this.keys = [];
 		this.keyOrder = {};
 		this.values = {};
@@ -22,14 +22,13 @@ export class OrderedMap {
 	 * @param key
 	 * @param value
 	 */
-	push(key: string, value: any) {
-
-		if (key in this.values){
-			console.error('Key: ' + key + ' already exists');
+	push(key: string, value: T) {
+		if (key in this.values) {
+			console.error("Key: " + key + " already exists");
 			return;
 		}
 		this.keys.push(key);
-		this.keyOrder[key] = this.keys.length-1;
+		this.keyOrder[key] = this.keys.length - 1;
 		this.values[key] = value;
 
 		this.length++;
@@ -56,11 +55,11 @@ export class OrderedMap {
 	 * @param key
 	 * @returns value mapped to key
 	 */
-	get(key: string){
+	get(key: string): T {
 		return this.values[key];
 	}
 
-	getByIndex(index: number){
+	getByIndex(index: number) {
 		return this.keys[index];
 	}
 
@@ -69,7 +68,7 @@ export class OrderedMap {
 	 * @param firstKey
 	 * @param secondKey
 	 */
-	swap(firstKey: string, secondKey: string){
+	swap(firstKey: string, secondKey: string) {
 		// perform swaps in keys array
 		var tempKey = this.keys[this.keyOrder[firstKey]];
 		this.keys[this.keyOrder[firstKey]] = secondKey;
@@ -85,7 +84,7 @@ export class OrderedMap {
 	 *
 	 * @returns Array of keys in their current order
 	 */
-	getKeys(){
+	getKeys() {
 		return this.keys;
 	}
 
@@ -93,7 +92,7 @@ export class OrderedMap {
 	 *
 	 * @returns Object of key value mappings
 	 */
-	getMap(){
+	getMap() {
 		return this.values;
 	}
 
@@ -104,8 +103,4 @@ export class OrderedMap {
 	getLocationOfKey(key: string) {
 		return this.keyOrder[key];
 	}
-
-
-
-
 }

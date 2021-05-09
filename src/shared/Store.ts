@@ -1,15 +1,14 @@
 import { BrowserView } from "electron";
-import { OrderedMap } from './OrderedMap';
+import { OrderedMap } from "./OrderedMap";
 
 interface Bundle {
 	[key: string]: string[];
 }
 
 export class Store {
-
 	bundles: Bundle = null;
 
-	views: OrderedMap = null;
+	views: OrderedMap<BrowserView> = null;
 
 	activeViewID: string;
 
