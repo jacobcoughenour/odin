@@ -1,5 +1,5 @@
-import { BrowserView } from "electron";
 import { OrderedMap } from "./OrderedMap";
+import { TabView } from "./TabView";
 
 interface Bundle {
 	[key: string]: string[];
@@ -8,7 +8,7 @@ interface Bundle {
 export class Store {
 	bundles: Bundle = null;
 
-	views: OrderedMap<BrowserView> = null;
+	views: OrderedMap<TabView> = null;
 
 	activeViewID: string;
 
@@ -16,7 +16,7 @@ export class Store {
 		// this.views = {};
 		this.bundles = {};
 		// this.viewIndex = [];
-		this.views = new OrderedMap();
+		this.views = new OrderedMap<TabView>();
 	}
 
 	getBrowserView(uuid: string) {
@@ -25,5 +25,14 @@ export class Store {
 
 	getTabOrderIndex(uuid: string) {
 		return this.views.getLocationOfKey(uuid);
+	}
+
+	getActiveView() {
+		const active = this.views.get(this.activeViewID);
+		if (!active) {
+			console.error("active view id is invalid: " + this.activeViewID);
+			return null;
+		}
+		return active;
 	}
 }

@@ -4,12 +4,13 @@ import { Listener } from "../Listener";
 import { destroyBrowserView } from "../../ViewService";
 import normalizeUrl from "normalize-url";
 import isUrl from "is-url";
+import { TabView, TabStatePayload } from "../../TabView";
 
 /**
  * The payload sent on the tab-list channel.
  */
 export type TabListPayload = {
-	tabs: { [key: string]: {} };
+	tabs: { [key: string]: TabStatePayload };
 	tab_order: string[];
 	active_tab_id: string;
 };
@@ -34,14 +35,10 @@ export class ServerListeners extends Listener {
 	createTabListPayload(): TabListPayload {
 		return {
 			tabs: this.store.views.getKeys().reduce((tabs, id) => {
-				const view: BrowserView = this.store.views.get(id);
-
-				tabs[id] = {
-					title: view.webContents.getTitle(),
-					url: view.webContents.getURL(),
-				};
+				const tab: TabView = this.store.getBrowserView(id);
+				if (tab) tabs[id] = tab.createTabStatePayload();
 				return tabs;
-			}, {} as { [key: string]: {} }),
+			}, {} as { [key: string]: TabStatePayload }),
 			tab_order: this.store.views.getKeys(),
 			active_tab_id: this.store.activeViewID,
 		};
@@ -56,6 +53,16 @@ export class ServerListeners extends Listener {
 			"tab-list",
 			this.createTabListPayload()
 		);
+	}
+
+	sendTabState(id: string) {
+		const view = this.store.views.get(id);
+
+		view &&
+			this.mainWindow.webContents.send("tab-update", {
+				uuid: id,
+				...view.createTabStatePayload(),
+			});
 	}
 
 	getWindowMode() {
@@ -82,7 +89,7 @@ export class ServerListeners extends Listener {
 	 * @param active_tab_id
 	 */
 	switchActiveTabID(active_tab_id: string): void {
-		const next = this.store.views.get(active_tab_id);
+		const next = this.store.getBrowserView(active_tab_id);
 		if (!next) {
 			console.error(
 				"tried to set active tab to invalid id: " + active_tab_id
@@ -92,14 +99,8 @@ export class ServerListeners extends Listener {
 
 		// hide active view if one is active
 		if (this.store.activeViewID) {
-			const prev = this.store.views.get(this.store.activeViewID);
-			if (!prev) {
-				console.error(
-					"active view id is invalid: " + this.store.activeViewID
-				);
-			} else {
-				this.mainWindow.removeBrowserView(prev);
-			}
+			const prev = this.store.getActiveView();
+			prev && this.mainWindow.removeBrowserView(prev);
 		}
 
 		this.store.activeViewID = active_tab_id;
@@ -136,37 +137,40 @@ export class ServerListeners extends Listener {
 	registerListeners() {
 		ipcMain.on("set-active-tab-url", (_event, { url }) => {
 			// get the active tab
-			const active = this.store.views.get(this.store.activeViewID);
-			if (!active) {
-				console.error(
-					"active view id is invalid: " + this.store.activeViewID
-				);
-				return;
-			}
+			const active = this.store.getActiveView();
 
-			if (isUrl(normalizeUrl(url))) {
-				url = normalizeUrl(url);
-			} else {
+			try {
+				if (!isUrl(normalizeUrl(url))) {
+					url = `https://duckduckgo.com/?q=${url}`;
+				}
+			} catch (error) {
 				url = `https://duckduckgo.com/?q=${url}`;
 			}
 
-			active.webContents.loadURL(url, {
-				// userAgent: "Chrome",
-			});
+			active &&
+				active.webContents.loadURL(normalizeUrl(url), {
+					// userAgent: "Chrome",
+				});
+		});
+
+		ipcMain.on("navigate-back", () => {
+			const active = this.store.getActiveView();
+			active && active.webContents.goBack();
+		});
+
+		ipcMain.on("navigate-forward", () => {
+			const active = this.store.getActiveView();
+			active && active.webContents.goForward();
 		});
 
 		ipcMain.on("refresh-active-tab", () => {
-			// get the active tab
-			const active = this.store.views.get(this.store.activeViewID);
-			if (!active) {
-				console.error(
-					"active view id is invalid: " + this.store.activeViewID
-				);
-				return;
-			}
+			const active = this.store.getActiveView();
+			active && active.webContents.reload();
+		});
 
-			// reload the tab
-			active.webContents.reload();
+		ipcMain.on("stop-navigation", () => {
+			const active = this.store.getActiveView();
+			active && active.webContents.stop();
 		});
 
 		ipcMain.on("set-active-tab", (_event, args) => {
@@ -182,7 +186,7 @@ export class ServerListeners extends Listener {
 
 		ipcMain.on("close-tab", (_event, args) => {
 			let uuidIndex: number = this.store.getTabOrderIndex(args.uuid);
-			const view: BrowserView = this.store.views.get(args.uuid);
+			const view = this.store.getBrowserView(args.uuid);
 
 			// unregister from view lists
 			this.store.views.remove(args.uuid);

@@ -23,8 +23,19 @@ import {
 import { ipcRenderer } from "electron";
 import "./index.css";
 import clsx from "clsx";
+import omit from "object.omit";
 
 type AppProps = {};
+
+type TabState = {
+	title: string;
+	url: string;
+	favicon: string;
+	theme_color: string;
+	is_loading: boolean;
+	can_go_back: boolean;
+	can_go_forward: boolean;
+};
 
 /**
  * This is the top-most state for our App component.
@@ -36,7 +47,9 @@ type AppState = {
 	 * The info for each tab stored by their ID. Use tab_order to get the order
 	 * they are rendered in.
 	 */
-	tabs: { [key: string]: { title: string; url: string } };
+	tabs: {
+		[key: string]: TabState;
+	};
 	/**
 	 * The order that the tabs are shown along the top of the window.
 	 * This is a flat array with just the tab IDs. Use tabs to get the info for
@@ -85,12 +98,18 @@ export class App extends React.Component<AppProps, AppState> {
 				this.setState({ active_tab_id });
 			})
 			.on("tab-list", (_event, { tabs, tab_order, active_tab_id }) => {
-				this.setState({ tabs, tab_order, active_tab_id });
+				this.setState({
+					tabs,
+					tab_order,
+					active_tab_id,
+				});
 			})
-			.on("url-update", (_event, { uuid, title, url }) => {
+			.on("tab-update", (_event, args) => {
 				this.setState((state) => {
-					state.tabs[uuid].title = title;
-					state.tabs[uuid].url = url;
+					state.tabs[args.uuid] = {
+						...state.tabs[args.uuid],
+						...omit(args, "uuid"),
+					};
 					return state;
 				});
 			})
@@ -128,8 +147,13 @@ export class App extends React.Component<AppProps, AppState> {
 			title_bar_style,
 		} = this.state;
 
+		const border_color = "rgb(139, 92, 246)";
+
 		// get the current tab info but fallback to defaults if we need to.
-		const current_tab = tabs[active_tab_id] || { url: "" };
+		const current_tab: TabState = {
+			theme_color: border_color,
+			...tabs[active_tab_id],
+		};
 
 		const is_maximized = window_mode === "maximized";
 		const is_fullscreen = !is_maximized && window_mode === "fullscreen";
@@ -159,6 +183,11 @@ export class App extends React.Component<AppProps, AppState> {
 					"rounded-sm",
 					"overflow-hidden"
 				)}
+				style={{
+					borderColor: show_window_frame_border
+						? current_tab.theme_color
+						: "black",
+				}}
 			>
 				{/* Window Header */}
 				<div
@@ -167,13 +196,15 @@ export class App extends React.Component<AppProps, AppState> {
 						"space-x-0",
 						"flex",
 						"border-b",
-						"border-purple-500",
 						compact
 							? window_buttons_left_side
 								? "flex-row-reverse"
 								: "flex-row"
 							: "flex-col-reverse"
 					)}
+					style={{
+						borderColor: current_tab.theme_color,
+					}}
 				>
 					<div
 						className={clsx(
@@ -196,15 +227,31 @@ export class App extends React.Component<AppProps, AppState> {
 						}}
 					>
 						{/* Nav buttons */}
-						<IconButton icon={ArrowLeft} size={22} />
-						<IconButton disabled icon={ArrowRight} size={22} />
 						<IconButton
+							disabled={!current_tab.can_go_back}
+							icon={ArrowLeft}
+							size={22}
 							onClick={() => {
-								ipcRenderer.send("refresh-active-tab");
+								ipcRenderer.send("navigate-back");
 							}}
-							icon={RotateCw}
+						/>
+						<IconButton
+							disabled={!current_tab.can_go_forward}
+							icon={ArrowRight}
+							size={22}
+							onClick={() => {
+								ipcRenderer.send("navigate-forward");
+							}}
+						/>
+						<IconButton
+							icon={current_tab.is_loading ? X : RotateCw}
 							size={16}
 							iconprops={{ strokeWidth: 2.2 }}
+							onClick={() => {
+								current_tab.is_loading
+									? ipcRenderer.send("stop-navigation")
+									: ipcRenderer.send("refresh-active-tab");
+							}}
 						/>
 						{/* We wrap the tabs list and omnibox in this container so
 						they share the same space and we toggle between them. */}
@@ -225,7 +272,6 @@ export class App extends React.Component<AppProps, AppState> {
 							<div
 								className={clsx(
 									"region-drag",
-									// show_omnibox && "opacity-50",
 									show_omnibox && "hidden",
 									"absolute",
 									"flex",
@@ -240,7 +286,12 @@ export class App extends React.Component<AppProps, AppState> {
 										key={id}
 										uuid={id}
 										title={tabs[id].title}
+										favicon={tabs[id].favicon}
+										theme_color={
+											tabs[id].theme_color || border_color
+										}
 										url={tabs[id].url}
+										is_loading={tabs[id].is_loading}
 										active={active_tab_id === id}
 										onInactiveClick={() => {
 											// tell main to switch to this tab

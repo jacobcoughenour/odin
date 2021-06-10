@@ -7,9 +7,11 @@ import omit from "object.omit";
 
 export type TabButtonProps = {
 	uuid: string;
-	icon?: string;
+	favicon?: string;
 	title: string;
 	url: string;
+	theme_color: string;
+	is_loading: boolean;
 	active: boolean;
 	onInactiveClick?: MouseEventHandler<HTMLButtonElement>;
 	onActiveClick?: MouseEventHandler<HTMLButtonElement>;
@@ -32,6 +34,8 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 		props.onCloseClick && props.onCloseClick(e);
 		e.stopPropagation();
 	};
+
+	console.log(props.theme_color);
 
 	return (
 		<button
@@ -60,16 +64,15 @@ const TabButton: React.FC<TabButtonProps> = (props) => {
 				"-ml-px",
 				"text-black",
 				"dark:text-white",
-				props.active
-					? ["bg-black", "border-purple-500"]
-					: ["bg-transparent", "hover:border-purple-600"],
+				props.active ? ["bg-black"] : ["bg-transparent"],
 				props.className
 			)}
 			style={{
 				maxWidth: 240,
+				borderColor: props.theme_color,
 			}}
 		>
-			{/* todo put favicon here */}
+			<img src={props.favicon || ""} className={"w-4 h-4 p-1"} />
 			<span
 				className={clsx(
 					"ml-2",
